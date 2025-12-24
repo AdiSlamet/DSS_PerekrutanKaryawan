@@ -1,557 +1,1010 @@
 @extends('layouts.app')
 
-@section('title', 'Pengaturan Bobot Kriteria')
-    
+@section('title', 'Manajemen Bobot Kriteria')
+
 @section('content')
-<link rel="stylesheet" href="css/dashboard/bobot.css">
-<div class="bobot-settings-page">
+    <link rel="stylesheet" href="css/dashboard/bobot.css">
+<div class="candidates-page">
     <!-- Header Halaman -->
     <div class="page-header">
         <div class="header-content">
             <div class="header-icon">
-                <ion-icon name="options-outline"></ion-icon>
+                <ion-icon name="scale-outline"></ion-icon>
             </div>
             <div>
-                <h1>Pengaturan Bobot Kriteria</h1>
-                <p class="page-subtitle">Atur bobot penilaian untuk sistem seleksi karyawan</p>
+                <h1>Manajemen Bobot Kriteria</h1>
+                <p class="page-subtitle">Kelola bobot untuk setiap kriteria penilaian</p>
             </div>
         </div>
         <div class="header-actions">
-            <button class="btn btn-primary" id="btnSave">
-                <ion-icon name="save-outline"></ion-icon> Simpan Perubahan
+            <button class="btn btn-primary" id="btnTambahBobot">
+                <ion-icon name="add-outline"></ion-icon> Tambah Bobot
             </button>
         </div>
     </div>
 
-    <!-- Navigasi Halaman -->
-    {{-- <div class="page-navigation">
-        <div class="nav-tabs">
-            <a href="#pengaturan" class="nav-tab active">
-                <ion-icon name="settings-outline"></ion-icon>
-                Pengaturan Bobot
-            </a>
-            <a href="#riwayat" class="nav-tab">
-                <ion-icon name="time-outline"></ion-icon>
-                Riwayat Perubahan
-            </a>
-            <a href="#analisis" class="nav-tab">
-                <ion-icon name="analytics-outline"></ion-icon>
-                Analisis Dampak
-            </a>
-        </div>
-        
-        <div class="quick-actions">
-            <div class="dropdown">
-                <button class="btn btn-outline-secondary dropdown-toggle" type="button" id="presetDropdown">
-                    <ion-icon name="color-palette-outline"></ion-icon>
-                    Preset
-                </button>
-                <div class="dropdown-menu">
-                    <a class="dropdown-item" href="#" data-preset="default">
-                        <ion-icon name="refresh-outline"></ion-icon> Default
-                    </a>
-                    <a class="dropdown-item" href="#" data-preset="experience-heavy">
-                        <ion-icon name="trending-up-outline"></ion-icon> Fokus Pengalaman
-                    </a>
-                    <a class="dropdown-item" href="#" data-preset="balanced">
-                        <ion-icon name="balance-outline"></ion-icon> Seimbang
-                    </a>
-                    <a class="dropdown-item" href="#" data-preset="communication-heavy">
-                        <ion-icon name="chatbubble-outline"></ion-icon> Fokus Komunikasi
-                    </a>
+    <!-- Statistik Cards -->
+    <div class="stats-section">
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-icon" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                    <ion-icon name="layers-outline"></ion-icon>
+                </div>
+                <div class="stat-content">
+                    <h3 id="totalBobot">0</h3>
+                    <p>Total Bobot</p>
                 </div>
             </div>
             
-            <button class="btn btn-outline-secondary" id="btnResetAll">
-                <ion-icon name="trash-outline"></ion-icon> Reset Semua
-            </button>
-        </div>
-    </div> --}}
-
-    <!-- Konten Utama -->
-    <div class="page-content">
-        <!-- Panel Kiri: Kontrol Bobot -->
-        <div class="left-panel">
-            <!-- Informasi Penting -->
-            <div class="info-card">
-                <div class="info-icon">
-                    <ion-icon name="information-circle-outline"></ion-icon>
+            <div class="stat-card">
+                <div class="stat-icon" style="background: linear-gradient(135deg, #4CAF50 0%, #2E7D32 100%);">
+                    <ion-icon name="checkmark-circle-outline"></ion-icon>
                 </div>
-                <div class="info-content">
-                    <h3>Panduan Pengaturan Bobot</h3>
-                    <p>Total bobot semua kriteria harus 100%. Sistem akan menyesuaikan bobot kriteria lain secara otomatis saat Anda melakukan perubahan.</p>
+                <div class="stat-content">
+                    <h3 id="totalBobotValue">0</h3>
+                    <p>Total Nilai Bobot</p>
                 </div>
             </div>
-
-            <!-- Form Pengaturan Bobot -->
-            <form id="formBobot" class="bobot-form">
-                <div class="bobot-sections">
-                    <!-- Kriteria 1: Pengalaman -->
-                    <section class="bobot-section active" id="section-pengalaman">
-                        <div class="section-header">
-                            <div class="criteria-badge" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
-                                <ion-icon name="briefcase-outline"></ion-icon>
-                            </div>
-                            <div class="section-title">
-                                <h2>Pengalaman Kerja</h2>
-                                <p class="section-description">Penilaian berdasarkan pengalaman kerja yang relevan</p>
-                            </div>
-                            <div class="section-indicator">
-                                <span class="priority-badge">
-                                    <ion-icon name="trophy-outline"></ion-icon>
-                                    Prioritas Tertinggi
-                                </span>
-                                <span class="current-value" id="currentPengalaman">30%</span>
-                            </div>
-                        </div>
-                        
-                        <div class="section-body">
-                            <div class="control-group">
-                                <label for="sliderPengalaman">
-                                    <span>Atur Bobot</span>
-                                    <span class="range-info">(10% - 50%)</span>
-                                </label>
-                                <div class="slider-container">
-                                    <input type="range" 
-                                           class="bobot-slider" 
-                                           id="sliderPengalaman" 
-                                           min="10" 
-                                           max="50" 
-                                           value="30" 
-                                           step="1"
-                                           data-criteria="pengalaman">
-                                    <div class="slider-ticks">
-                                        <span>10%</span>
-                                        <span>30%</span>
-                                        <span>50%</span>
-                                    </div>
-                                </div>
-                            </div>
-                            
-                            <div class="control-group">
-                                <label>Input Manual</label>
-                                <div class="input-controls">
-                                    <button type="button" class="btn-decrement" data-criteria="pengalaman">
-                                        <ion-icon name="remove-outline"></ion-icon>
-                                    </button>
-                                    <div class="input-wrapper">
-                                        <input type="number" 
-                                               id="inputPengalaman" 
-                                               class="bobot-input" 
-                                               min="10" 
-                                               max="50" 
-                                               value="30"
-                                               data-criteria="pengalaman">
-                                        <span class="input-suffix">%</span>
-                                    </div>
-                                    <button type="button" class="btn-increment" data-criteria="pengalaman">
-                                        <ion-icon name="add-outline"></ion-icon>
-                                    </button>
-                                    <button type="button" class="btn-reset" data-criteria="pengalaman">
-                                        <ion-icon name="refresh-outline"></ion-icon>
-                                        Reset
-                                    </button>
-                                </div>
-                            </div>
-                            
-                            <div class="criteria-details">
-                                <h4><ion-icon name="information-circle-outline"></ion-icon> Detail Kriteria</h4>
-                                <ul>
-                                    <li>Diukur dalam tahun pengalaman kerja</li>
-                                    <li>Relevansi dengan posisi yang dilamar</li>
-                                    <li>Pengalaman di bidang yang sama lebih diutamakan</li>
-                                    <li>Memiliki rentang bobot terluas (10-50%)</li>
-                                </ul>
-                            </div>
-                        </div>
-                    </section>
-
-                    <!-- Kriteria 2: Jarak -->
-                    <section class="bobot-section" id="section-jarak">
-                        <div class="section-header">
-                            <div class="criteria-badge" style="background: linear-gradient(135deg, #4CAF50 0%, #2E7D32 100%);">
-                                <ion-icon name="location-outline"></ion-icon>
-                            </div>
-                            <div class="section-title">
-                                <h2>Jarak Tempat Tinggal</h2>
-                                <p class="section-description">Penilaian berdasarkan jarak lokasi tinggal dengan kantor</p>
-                            </div>
-                            <div class="section-indicator">
-                                <span class="current-value" id="currentJarak">25%</span>
-                            </div>
-                        </div>
-                        
-                        <div class="section-body">
-                            <div class="control-group">
-                                <label for="sliderJarak">
-                                    <span>Atur Bobot</span>
-                                    <span class="range-info">(10% - 40%)</span>
-                                </label>
-                                <div class="slider-container">
-                                    <input type="range" 
-                                           class="bobot-slider" 
-                                           id="sliderJarak" 
-                                           min="10" 
-                                           max="40" 
-                                           value="25" 
-                                           step="1"
-                                           data-criteria="jarak">
-                                    <div class="slider-ticks">
-                                        <span>10%</span>
-                                        <span>25%</span>
-                                        <span>40%</span>
-                                    </div>
-                                </div>
-                            </div>
-                            
-                            <div class="control-group">
-                                <label>Input Manual</label>
-                                <div class="input-controls">
-                                    <button type="button" class="btn-decrement" data-criteria="jarak">
-                                        <ion-icon name="remove-outline"></ion-icon>
-                                    </button>
-                                    <div class="input-wrapper">
-                                        <input type="number" 
-                                               id="inputJarak" 
-                                               class="bobot-input" 
-                                               min="10" 
-                                               max="40" 
-                                               value="25"
-                                               data-criteria="jarak">
-                                        <span class="input-suffix">%</span>
-                                    </div>
-                                    <button type="button" class="btn-increment" data-criteria="jarak">
-                                        <ion-icon name="add-outline"></ion-icon>
-                                    </button>
-                                    <button type="button" class="btn-reset" data-criteria="jarak">
-                                        <ion-icon name="refresh-outline"></ion-icon>
-                                        Reset
-                                    </button>
-                                </div>
-                            </div>
-                            
-                            <div class="criteria-details">
-                                <h4><ion-icon name="information-circle-outline"></ion-icon> Detail Kriteria</h4>
-                                <ul>
-                                    <li>Diukur dalam kilometer</li>
-                                    <li>Semakin dekat jarak, nilai semakin tinggi</li>
-                                    <li>Mempertimbangkan kemacetan dan akses transportasi</li>
-                                    <li>Dapat mempengaruhi ketepatan waktu kerja</li>
-                                </ul>
-                            </div>
-                        </div>
-                    </section>
-
-                    <!-- Kriteria 3: Komunikasi -->
-                    <section class="bobot-section" id="section-komunikasi">
-                        <div class="section-header">
-                            <div class="criteria-badge" style="background: linear-gradient(135deg, #FF9800 0%, #F57C00 100%);">
-                                <ion-icon name="chatbubbles-outline"></ion-icon>
-                            </div>
-                            <div class="section-title">
-                                <h2>Kemampuan Komunikasi</h2>
-                                <p class="section-description">Penilaian kemampuan komunikasi verbal dan non-verbal</p>
-                            </div>
-                            <div class="section-indicator">
-                                <span class="current-value" id="currentKomunikasi">25%</span>
-                            </div>
-                        </div>
-                        
-                        <div class="section-body">
-                            <div class="control-group">
-                                <label for="sliderKomunikasi">
-                                    <span>Atur Bobot</span>
-                                    <span class="range-info">(10% - 40%)</span>
-                                </label>
-                                <div class="slider-container">
-                                    <input type="range" 
-                                           class="bobot-slider" 
-                                           id="sliderKomunikasi" 
-                                           min="10" 
-                                           max="40" 
-                                           value="25" 
-                                           step="1"
-                                           data-criteria="komunikasi">
-                                    <div class="slider-ticks">
-                                        <span>10%</span>
-                                        <span>25%</span>
-                                        <span>40%</span>
-                                    </div>
-                                </div>
-                            </div>
-                            
-                            <div class="control-group">
-                                <label>Input Manual</label>
-                                <div class="input-controls">
-                                    <button type="button" class="btn-decrement" data-criteria="komunikasi">
-                                        <ion-icon name="remove-outline"></ion-icon>
-                                    </button>
-                                    <div class="input-wrapper">
-                                        <input type="number" 
-                                               id="inputKomunikasi" 
-                                               class="bobot-input" 
-                                               min="10" 
-                                               max="40" 
-                                               value="25"
-                                               data-criteria="komunikasi">
-                                        <span class="input-suffix">%</span>
-                                    </div>
-                                    <button type="button" class="btn-increment" data-criteria="komunikasi">
-                                        <ion-icon name="add-outline"></ion-icon>
-                                    </button>
-                                    <button type="button" class="btn-reset" data-criteria="komunikasi">
-                                        <ion-icon name="refresh-outline"></ion-icon>
-                                        Reset
-                                    </button>
-                                </div>
-                            </div>
-                            
-                            <div class="criteria-details">
-                                <h4><ion-icon name="information-circle-outline"></ion-icon> Detail Kriteria</h4>
-                                <ul>
-                                    <li>Dinilai melalui tes komunikasi dan wawancara</li>
-                                    <li>Meliputi kemampuan presentasi dan negosiasi</li>
-                                    <li>Kemampuan mendengarkan dan memahami instruksi</li>
-                                    <li>Komunikasi tertulis dan lisan</li>
-                                </ul>
-                            </div>
-                        </div>
-                    </section>
-
-                    <!-- Kriteria 4: Fleksibilitas -->
-                    <section class="bobot-section" id="section-fleksibilitas">
-                        <div class="section-header">
-                            <div class="criteria-badge" style="background: linear-gradient(135deg, #9C27B0 0%, #7B1FA2 100%);">
-                                <ion-icon name="time-outline"></ion-icon>
-                            </div>
-                            <div class="section-title">
-                                <h2>Fleksibilitas Kerja</h2>
-                                <p class="section-description">Penilaian kemampuan adaptasi dan fleksibilitas waktu kerja</p>
-                            </div>
-                            <div class="section-indicator">
-                                <span class="current-value" id="currentFleksibilitas">20%</span>
-                            </div>
-                        </div>
-                        
-                        <div class="section-body">
-                            <div class="control-group">
-                                <label for="sliderFleksibilitas">
-                                    <span>Atur Bobot</span>
-                                    <span class="range-info">(10% - 40%)</span>
-                                </label>
-                                <div class="slider-container">
-                                    <input type="range" 
-                                           class="bobot-slider" 
-                                           id="sliderFleksibilitas" 
-                                           min="10" 
-                                           max="40" 
-                                           value="20" 
-                                           step="1"
-                                           data-criteria="fleksibilitas">
-                                    <div class="slider-ticks">
-                                        <span>10%</span>
-                                        <span>20%</span>
-                                        <span>40%</span>
-                                    </div>
-                                </div>
-                            </div>
-                            
-                            <div class="control-group">
-                                <label>Input Manual</label>
-                                <div class="input-controls">
-                                    <button type="button" class="btn-decrement" data-criteria="fleksibilitas">
-                                        <ion-icon name="remove-outline"></ion-icon>
-                                    </button>
-                                    <div class="input-wrapper">
-                                        <input type="number" 
-                                               id="inputFleksibilitas" 
-                                               class="bobot-input" 
-                                               min="10" 
-                                               max="40" 
-                                               value="20"
-                                               data-criteria="fleksibilitas">
-                                        <span class="input-suffix">%</span>
-                                    </div>
-                                    <button type="button" class="btn-increment" data-criteria="fleksibilitas">
-                                        <ion-icon name="add-outline"></ion-icon>
-                                    </button>
-                                    <button type="button" class="btn-reset" data-criteria="fleksibilitas">
-                                        <ion-icon name="refresh-outline"></ion-icon>
-                                        Reset
-                                    </button>
-                                </div>
-                            </div>
-                            
-                            <div class="criteria-details">
-                                <h4><ion-icon name="information-circle-outline"></ion-icon> Detail Kriteria</h4>
-                                <ul>
-                                    <li>Kesiapan kerja shift atau lembur</li>
-                                    <li>Kemampuan adaptasi terhadap perubahan</li>
-                                    <li>Fleksibilitas waktu dan tempat kerja</li>
-                                    <li>Respon terhadap tekanan dan deadline</li>
-                                </ul>
-                            </div>
-                        </div>
-                    </section>
+            
+            <div class="stat-card">
+                <div class="stat-icon" style="background: linear-gradient(135deg, #FF9800 0%, #F57C00 100%);">
+                    <ion-icon name="analytics-outline"></ion-icon>
                 </div>
-            </form>
-        </div>
-
-        <!-- Panel Kanan: Ringkasan dan Visualisasi -->
-        <div class="right-panel">
-            <!-- Ringkasan Total -->
-            <div class="summary-card">
-                <div class="summary-header">
-                    <h3><ion-icon name="calculator-outline"></ion-icon> Ringkasan Bobot</h3>
-                    <div class="summary-status" id="totalStatus">
-                        <span class="status-valid">
-                            <ion-icon name="checkmark-circle-outline"></ion-icon>
-                            Valid
-                        </span>
-                    </div>
-                </div>
-                
-                <div class="summary-content">
-                    <div class="total-display">
-                        <div class="total-label">Total Bobot</div>
-                        <div class="total-value" id="totalBobot">100%</div>
-                    </div>
-                    
-                    <div class="progress-summary">
-                        <div class="progress-bar-large">
-                            <div class="progress-fill" id="progressFill" style="width: 100%;"></div>
-                        </div>
-                        <div class="progress-labels">
-                            <span>0%</span>
-                            <span>50%</span>
-                            <span>100%</span>
-                        </div>
-                    </div>
-                    
-                    <div class="distribution-info">
-                        <h4>Distribusi Bobot</h4>
-                        <div class="distribution-bars">
-                            <div class="dist-bar" style="width: 30%; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
-                                <span class="dist-label">Pengalaman</span>
-                                <span class="dist-value">30%</span>
-                            </div>
-                            <div class="dist-bar" style="width: 25%; background: linear-gradient(135deg, #4CAF50 0%, #2E7D32 100%);">
-                                <span class="dist-label">Jarak</span>
-                                <span class="dist-value">25%</span>
-                            </div>
-                            <div class="dist-bar" style="width: 25%; background: linear-gradient(135deg, #FF9800 0%, #F57C00 100%);">
-                                <span class="dist-label">Komunikasi</span>
-                                <span class="dist-value">25%</span>
-                            </div>
-                            <div class="dist-bar" style="width: 20%; background: linear-gradient(135deg, #9C27B0 0%, #7B1FA2 100%);">
-                                <span class="dist-label">Fleksibilitas</span>
-                                <span class="dist-value">20%</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Analisis Dampak -->
-            <div class="impact-card">
-                <div class="impact-header">
-                    <h3><ion-icon name="analytics-outline"></ion-icon> Analisis Dampak</h3>
-                    <span class="impact-update">Real-time</span>
-                </div>
-                
-                <div class="impact-content">
-                    <div class="impact-item">
-                        <div class="impact-info">
-                            <h4>Prioritas Tertinggi</h4>
-                            <p>Kriteria dengan bobot tertinggi</p>
-                        </div>
-                        <div class="impact-value" id="highestCriteria">
-                            <span class="criteria-tag" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
-                                Pengalaman (30%)
-                            </span>
-                        </div>
-                    </div>
-                    
-                    <div class="impact-item">
-                        <div class="impact-info">
-                            <h4>Pengaruh pada Seleksi</h4>
-                            <p>Kriteria akan lebih menentukan</p>
-                        </div>
-                        <div class="impact-value">
-                            <span id="influenceLevel" class="level-high">Tinggi</span>
-                        </div>
-                    </div>
-                    
-                    <div class="impact-item">
-                        <div class="impact-info">
-                            <h4>Keseimbangan</h4>
-                            <p>Distribusi bobot antar kriteria</p>
-                        </div>
-                        <div class="impact-value">
-                            <span id="balanceScore" class="score-good">Baik</span>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="impact-footer">
-                    <p><ion-icon name="information-circle-outline"></ion-icon> Bobot yang seimbang menghasilkan seleksi yang lebih objektif</p>
-                </div>
-            </div>
-
-            <!-- Panduan Cepat -->
-            <div class="guide-card">
-                <div class="guide-header">
-                    <h3><ion-icon name="bulb-outline"></ion-icon> Panduan Cepat</h3>
-                </div>
-                
-                <div class="guide-content">
-                    <div class="guide-item">
-                        <div class="guide-icon">
-                            <ion-icon name="checkmark-circle-outline"></ion-icon>
-                        </div>
-                        <div class="guide-text">
-                            <h5>Total 100%</h5>
-                            <p>Pastikan total bobot selalu 100%</p>
-                        </div>
-                    </div>
-                    
-                    <div class="guide-item">
-                        <div class="guide-icon">
-                            <ion-icon name="sync-outline"></ion-icon>
-                        </div>
-                        <div class="guide-text">
-                            <h5>Auto-adjust</h5>
-                            <p>Sistem otomatis menyesuaikan bobot lainnya</p>
-                        </div>
-                    </div>
-                    
-                    <div class="guide-item">
-                        <div class="guide-icon">
-                            <ion-icon name="save-outline"></ion-icon>
-                        </div>
-                        <div class="guide-text">
-                            <h5>Simpan Perubahan</h5>
-                            <p>Klik tombol Simpan untuk menerapkan</p>
-                        </div>
-                    </div>
+                <div class="stat-content">
+                    <h3 id="averageBobot">0</h3>
+                    <p>Rata-rata Bobot</p>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Footer Halaman -->
-    <div class="page-footer">
-        <div class="footer-content">
-            <div class="footer-info">
-                <ion-icon name="shield-checkmark-outline"></ion-icon>
-                <div>
-                    <h4>Pengaturan Aman</h4>
-                    <p>Perubahan akan diterapkan pada sistem seleksi berikutnya</p>
-                </div>
+    <!-- Tabel Data Bobot -->
+    <div class="data-section">
+        <div class="section-header">
+            <h2><ion-icon name="list-outline"></ion-icon> Daftar Bobot Kriteria</h2>
+            <div class="section-actions">
+                <button class="btn btn-outline" id="btnRefreshBobot">
+                    <ion-icon name="refresh-outline"></ion-icon> Refresh
+                </button>
+            </div>
+        </div>
+        
+        <div class="table-container">
+            <table class="candidates-table" id="bobotTable">
+                <thead>
+                    <tr>
+                        <th style="width: 80px;">No</th>
+                        <th>Kriteria</th>
+                        <th style="width: 150px;">Bobot</th>
+                        <th style="width: 120px;">Persentase</th>
+                        <th style="width: 150px;">Aksi</th>
+                    </tr>
+                </thead>
+                <tbody id="bobotTableBody">
+                    <!-- Data akan diisi oleh JavaScript -->
+                </tbody>
+            </table>
+        </div>
+        
+        <!-- Loading State -->
+        <div class="loading-state" id="loadingState">
+            <div class="spinner"></div>
+            <p>Memuat data bobot...</p>
+        </div>
+        
+        <!-- Empty State -->
+        <div class="empty-state" id="emptyState">
+            <div class="empty-icon">
+                <ion-icon name="scale-outline"></ion-icon>
+            </div>
+            <h3>Belum Ada Data Bobot</h3>
+            <p>Tambahkan bobot untuk setiap kriteria penilaian</p>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL TAMBAH BOBOT -->
+<div class="custom-modal" id="modalTambahBobot">
+    <div class="modal-overlay" id="modalOverlayTambahBobot"></div>
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <ion-icon name="add-circle-outline"></ion-icon>
+                    Tambah Bobot Baru
+                </h5>
+                <button type="button" class="modal-close" id="closeTambahBobot">
+                    <ion-icon name="close-outline"></ion-icon>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="formTambahBobot">
+                    @csrf
+                    <div class="form-group">
+                        <label for="kriteria_id" class="form-label">Kriteria <span class="text-danger">*</span></label>
+                        <select class="form-control" id="kriteria_id" name="kriteria_id" required>
+                            <option value="">Pilih Kriteria</option>
+                            <!-- Options akan diisi oleh JavaScript -->
+                        </select>
+                        <div class="invalid-feedback">Harap pilih kriteria</div>
+                    </div>
+                    <div class="form-group">
+                        <label for="bobot" class="form-label">Nilai Bobot <span class="text-danger">*</span></label>
+                        <input type="number" class="form-control" id="bobot" name="bobot" 
+                               min="0" step="0.01" placeholder="Contoh: 0.25" required>
+                        <small class="text-muted">
+                            <ion-icon name="information-circle-outline"></ion-icon>
+                            Nilai bobot antara 0-1 (misal: 0.25 untuk 25%)
+                        </small>
+                        <div class="invalid-feedback">Nilai bobot harus diisi</div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" id="btnBatalTambahBobot">
+                    <ion-icon name="close-outline"></ion-icon> Batal
+                </button>
+                <button type="button" class="btn btn-primary" id="btnSimpanBobot">
+                    <ion-icon name="save-outline"></ion-icon> Simpan
+                </button>
             </div>
         </div>
     </div>
 </div>
 
+<!-- MODAL EDIT BOBOT -->
+<div class="custom-modal" id="modalEditBobot">
+    <div class="modal-overlay" id="modalOverlayEditBobot"></div>
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <ion-icon name="create-outline"></ion-icon>
+                    Edit Bobot
+                </h5>
+                <button type="button" class="modal-close" id="closeEditBobot">
+                    <ion-icon name="close-outline"></ion-icon>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="formEditBobot">
+                    @csrf
+                    @method('PUT')
+                    <input type="hidden" id="editBobotId" name="id">
+                    <div class="form-group">
+                        <label class="form-label">Kriteria</label>
+                        <input type="text" class="form-control" id="editKriteriaNama" readonly>
+                        <small class="text-muted">Kriteria tidak dapat diubah</small>
+                    </div>
+                    <div class="form-group">
+                        <label for="editBobot" class="form-label">Nilai Bobot *</label>
+                        <input type="number" class="form-control" id="editBobot" name="bobot" 
+                               min="0" step="0.01" required>
+                        <div class="invalid-feedback">Nilai bobot harus diisi</div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" id="btnBatalEditBobot">
+                    <ion-icon name="close-outline"></ion-icon> Batal
+                </button>
+                <button type="button" class="btn btn-primary" id="btnUpdateBobot">
+                    <ion-icon name="save-outline"></ion-icon> Update
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL HAPUS BOBOT -->
+<div class="custom-modal" id="modalHapusBobot">
+    <div class="modal-overlay" id="modalOverlayHapusBobot"></div>
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <ion-icon name="warning-outline"></ion-icon>
+                    Konfirmasi Hapus
+                </h5>
+                <button type="button" class="modal-close" id="closeHapusBobot">
+                    <ion-icon name="close-outline"></ion-icon>
+                </button>
+            </div>
+            <div class="modal-body">
+                <p>Apakah Anda yakin ingin menghapus bobot ini?</p>
+                <p><strong id="hapusBobotInfo"></strong></p>
+                <div class="alert alert-warning">
+                    <ion-icon name="alert-circle-outline"></ion-icon>
+                    <strong>Peringatan:</strong> Data yang dihapus tidak dapat dikembalikan!
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" id="btnBatalHapusBobot">
+                    <ion-icon name="close-outline"></ion-icon> Batal
+                </button>
+                <button type="button" class="btn btn-danger" id="btnKonfirmasiHapusBobot">
+                    <ion-icon name="trash-outline"></ion-icon> Hapus
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- CSRF Token untuk AJAX -->
+<meta name="csrf-token" content="{{ csrf_token() }}">
+
+<style>
+   /* Additional styles for Kriteria */
+.jenis-badge {
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 100px;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    letter-spacing: 0.3px;
+    text-transform: uppercase;
+    font-size: 0.75rem;
+}
+
+.jenis-badge:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.jenis-benefit {
+    background: linear-gradient(135deg, #10B981 0%, #059669 100%);
+    color: white;
+    box-shadow: 0 2px 8px rgba(16, 185, 129, 0.2);
+}
+
+.jenis-benefit:hover {
+    box-shadow: 0 4px 16px rgba(16, 185, 129, 0.3);
+}
+
+.jenis-cost {
+    background: linear-gradient(135deg, #EF4444 0%, #DC2626 100%);
+    color: white;
+    box-shadow: 0 2px 8px rgba(239, 68, 68, 0.2);
+}
+
+.jenis-cost:hover {
+    box-shadow: 0 4px 16px rgba(239, 68, 68, 0.3);
+}
+
+.subkriteria-count {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    background: linear-gradient(135deg, #8B5CF6 0%, #7C3AED 100%);
+    color: white;
+    border-radius: 50%;
+    font-weight: 700;
+    font-size: 0.875rem;
+    box-shadow: 0 2px 8px rgba(139, 92, 246, 0.2);
+    transition: all 0.3s ease;
+}
+
+.subkriteria-count:hover {
+    transform: scale(1.1);
+    box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);
+}
+
+/* Enhanced Table Styles */
+.table-container {
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
+    overflow: hidden;
+    border: 1px solid #F3F4F6;
+}
+
+.candidates-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+}
+
+.candidates-table thead {
+    background: linear-gradient(135deg, #F8FAFC 0%, #F1F5F9 100%);
+}
+
+.candidates-table th {
+    padding: 20px 24px;
+    font-weight: 600;
+    color: #475569;
+    font-size: 0.875rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border-bottom: 2px solid #E2E8F0;
+    white-space: nowrap;
+}
+
+.candidates-table td {
+    padding: 20px 24px;
+    color: #1E293B;
+    border-bottom: 1px solid #F1F5F9;
+    font-size: 0.95rem;
+    transition: background-color 0.2s ease;
+}
+
+.candidates-table tbody tr {
+    transition: all 0.3s ease;
+}
+
+.candidates-table tbody tr:hover {
+    background-color: #F8FAFC;
+    transform: translateX(2px);
+}
+
+.candidates-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+/* Enhanced Modal Styles */
+.custom-modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 1050;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.custom-modal.active {
+    display: flex;
+    opacity: 1;
+    visibility: visible;
+    animation: modalFadeIn 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes modalFadeIn {
+    0% {
+        opacity: 0;
+        transform: scale(0.95);
+    }
+    100% {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+.modal-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(15, 23, 42, 0.75);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    z-index: 1;
+    opacity: 0;
+    animation: overlayFadeIn 0.3s ease forwards;
+}
+
+@keyframes overlayFadeIn {
+    to {
+        opacity: 1;
+    }
+}
+
+.modal-dialog {
+    position: relative;
+    z-index: 2;
+    width: 100%;
+    max-width: 500px;
+    animation: slideUp 0.4s cubic-bezier(0.4, 0, 0.2, 1) 0.1s both;
+}
+
+@keyframes slideUp {
+    0% {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    100% {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.modal-content {
+    background: white;
+    border-radius: 20px;
+    box-shadow: 0 32px 64px rgba(15, 23, 42, 0.25);
+    overflow: hidden;
+    border: 1px solid #E2E8F0;
+}
+
+.modal-header {
+    padding: 24px 32px;
+    border-bottom: 1px solid #F1F5F9;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: linear-gradient(135deg, #F8FAFC 0%, #F1F5F9 100%);
+}
+
+.modal-title {
+    margin: 0;
+    font-size: 1.375rem;
+    font-weight: 700;
+    color: #1E293B;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.modal-title ion-icon {
+    font-size: 1.5rem;
+    color: #4361ee;
+}
+
+.modal-close {
+    background: rgba(255, 255, 255, 0.8);
+    border: 1px solid #E2E8F0;
+    font-size: 1.5rem;
+    color: #64748B;
+    cursor: pointer;
+    padding: 8px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+    width: 40px;
+    height: 40px;
+}
+
+.modal-close:hover {
+    background: white;
+    border-color: #4361ee;
+    color: #4361ee;
+    transform: rotate(90deg);
+    box-shadow: 0 4px 12px rgba(67, 97, 238, 0.1);
+}
+
+.modal-body {
+    padding: 32px;
+    max-height: 70vh;
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: #CBD5E1 #F1F5F9;
+}
+
+.modal-body::-webkit-scrollbar {
+    width: 6px;
+}
+
+.modal-body::-webkit-scrollbar-track {
+    background: #F1F5F9;
+    border-radius: 10px;
+}
+
+.modal-body::-webkit-scrollbar-thumb {
+    background: #CBD5E1;
+    border-radius: 10px;
+}
+
+.modal-body::-webkit-scrollbar-thumb:hover {
+    background: #94A3B8;
+}
+
+.modal-footer {
+    padding: 24px 32px;
+    border-top: 1px solid #F1F5F9;
+    display: flex;
+    justify-content: flex-end;
+    gap: 16px;
+    background: #F8FAFC;
+}
+
+/* Enhanced Form Styles */
+.form-group {
+    margin-bottom: 24px;
+}
+
+.form-label {
+    display: block;
+    margin-bottom: 10px;
+    font-weight: 600;
+    color: #334155;
+    font-size: 0.95rem;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.form-label .text-danger {
+    margin-left: -6px;
+}
+
+.form-control {
+    width: 100%;
+    padding: 14px 16px;
+    border: 2px solid #E2E8F0;
+    border-radius: 12px;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+    background: white;
+    color: #1E293B;
+    font-family: inherit;
+}
+
+.form-control:hover {
+    border-color: #CBD5E1;
+}
+
+.form-control:focus {
+    outline: none;
+    border-color: #4361ee;
+    box-shadow: 0 0 0 4px rgba(67, 97, 238, 0.15);
+    transform: translateY(-1px);
+}
+
+.form-control.is-invalid {
+    border-color: #EF4444;
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='none' stroke='%23EF4444' viewBox='0 0 12 12'%3e%3ccircle cx='6' cy='6' r='4.5'/%3e%3cpath stroke-linejoin='round' d='M5.8 3.6h.4L6 6.5z'/%3e%3ccircle cx='6' cy='8.2' r='.6' fill='%23EF4444' stroke='none'/%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right calc(0.375em + 0.1875rem) center;
+    background-size: calc(0.75em + 0.375rem) calc(0.75em + 0.375rem);
+    padding-right: calc(1.5em + 0.75rem);
+}
+
+.form-control.is-invalid:focus {
+    box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.15);
+}
+
+.invalid-feedback {
+    display: none;
+    margin-top: 8px;
+    color: #EF4444;
+    font-size: 0.875rem;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.invalid-feedback ion-icon {
+    font-size: 1rem;
+}
+
+.form-control.is-invalid ~ .invalid-feedback {
+    display: flex;
+}
+
+.text-muted {
+    color: #64748B;
+    font-size: 0.875rem;
+    margin-top: 10px;
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    line-height: 1.5;
+}
+
+.text-muted ion-icon {
+    margin-top: 2px;
+    color: #94A3B8;
+}
+
+/* Enhanced Button Styles */
+.btn {
+    padding: 14px 28px;
+    border-radius: 12px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    border: none;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    min-width: 120px;
+    position: relative;
+    overflow: hidden;
+}
+
+.btn::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 5px;
+    height: 5px;
+    background: rgba(255, 255, 255, 0.5);
+    opacity: 0;
+    border-radius: 100%;
+    transform: scale(1, 1) translate(-50%);
+    transform-origin: 50% 50%;
+}
+
+.btn:focus:not(:active)::after {
+    animation: ripple 1s ease-out;
+}
+
+@keyframes ripple {
+    0% {
+        transform: scale(0, 0);
+        opacity: 0.5;
+    }
+    100% {
+        transform: scale(20, 20);
+        opacity: 0;
+    }
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, #4361ee 0%, #3A56D4 100%);
+    color: white;
+    box-shadow: 0 4px 16px rgba(67, 97, 238, 0.3);
+}
+
+.btn-primary:hover {
+    background: linear-gradient(135deg, #3A56D4 0%, #2E4BC4 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(67, 97, 238, 0.4);
+}
+
+.btn-primary:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 8px rgba(67, 97, 238, 0.3);
+}
+
+.btn-secondary {
+    background: linear-gradient(135deg, #64748B 0%, #475569 100%);
+    color: white;
+    box-shadow: 0 4px 16px rgba(100, 116, 139, 0.3);
+}
+
+.btn-secondary:hover {
+    background: linear-gradient(135deg, #475569 0%, #334155 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(100, 116, 139, 0.4);
+}
+
+.btn-danger {
+    background: linear-gradient(135deg, #EF4444 0%, #DC2626 100%);
+    color: white;
+    box-shadow: 0 4px 16px rgba(239, 68, 68, 0.3);
+}
+
+.btn-danger:hover {
+    background: linear-gradient(135deg, #DC2626 0%, #B91C1C 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(239, 68, 68, 0.4);
+}
+
+.btn-outline-secondary {
+    background: white;
+    border: 2px solid #E2E8F0;
+    color: #475569;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.btn-outline-secondary:hover {
+    background: #F8FAFC;
+    border-color: #CBD5E1;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+}
+
+/* Enhanced Alert Styles */
+.alert {
+    padding: 18px 20px;
+    border-radius: 12px;
+    margin: 20px 0;
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    border-left: 4px solid;
+}
+
+.alert ion-icon {
+    font-size: 1.25rem;
+    flex-shrink: 0;
+    margin-top: 2px;
+}
+
+.alert-warning {
+    background: linear-gradient(135deg, #FEF3C7 0%, #FDE68A 100%);
+    border: 1px solid #FBBF24;
+    border-left-color: #F59E0B;
+    color: #92400E;
+}
+
+.alert-warning strong {
+    color: #B45309;
+}
+
+.alert .alert-content {
+    flex: 1;
+}
+
+.alert .alert-title {
+    font-weight: 700;
+    margin-bottom: 6px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+/* Enhanced Stats Section */
+.stats-section {
+    margin-bottom: 32px;
+}
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 24px;
+}
+
+.stat-card {
+    background: white;
+    border-radius: 20px;
+    padding: 28px;
+    display: flex;
+    align-items: center;
+    gap: 24px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+    border: 1px solid #F1F5F9;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+}
+
+.stat-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, var(--color-start), var(--color-end));
+}
+
+.stat-card:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.12);
+}
+
+.stat-icon {
+    width: 70px;
+    height: 70px;
+    border-radius: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2rem;
+    color: white;
+    flex-shrink: 0;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+}
+
+.stat-content h3 {
+    font-size: 2.5rem;
+    font-weight: 800;
+    color: #1E293B;
+    margin: 0 0 8px 0;
+    line-height: 1;
+    background: linear-gradient(135deg, #1E293B, #475569);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.stat-content p {
+    color: #64748B;
+    font-size: 1rem;
+    font-weight: 600;
+    margin: 0;
+    letter-spacing: 0.5px;
+}
+
+/* Loading State Enhancement */
+.loading-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 80px 20px;
+    text-align: center;
+}
+
+.spinner {
+    width: 60px;
+    height: 60px;
+    border: 4px solid #F1F5F9;
+    border-top-color: #4361ee;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin-bottom: 24px;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.loading-state p {
+    color: #64748B;
+    font-size: 1.1rem;
+    font-weight: 500;
+    margin: 0;
+}
+
+/* Empty State Enhancement */
+.empty-state {
+    text-align: center;
+    padding: 80px 20px;
+}
+
+.empty-icon {
+    font-size: 5rem;
+    color: #CBD5E1;
+    margin-bottom: 24px;
+    animation: float 3s ease-in-out infinite;
+}
+
+@keyframes float {
+    0%, 100% {
+        transform: translateY(0);
+    }
+    50% {
+        transform: translateY(-20px);
+    }
+}
+
+.empty-state h3 {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: #1E293B;
+    margin: 0 0 12px 0;
+}
+
+.empty-state p {
+    color: #64748B;
+    font-size: 1.1rem;
+    max-width: 400px;
+    margin: 0 auto 32px;
+    line-height: 1.6;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .modal-dialog {
+        max-width: 95%;
+        margin: 10px;
+    }
+    
+    .modal-header,
+    .modal-body,
+    .modal-footer {
+        padding: 20px;
+    }
+    
+    .stats-grid {
+        grid-template-columns: 1fr;
+        gap: 16px;
+    }
+    
+    .stat-card {
+        padding: 20px;
+    }
+    
+    .stat-icon {
+        width: 60px;
+        height: 60px;
+        font-size: 1.5rem;
+    }
+    
+    .candidates-table {
+        display: block;
+        overflow-x: auto;
+    }
+    
+    .candidates-table th,
+    .candidates-table td {
+        padding: 16px 12px;
+        white-space: nowrap;
+    }
+    
+    .btn {
+        padding: 12px 20px;
+        min-width: 100px;
+    }
+    
+    .modal-footer {
+        flex-direction: column;
+    }
+    
+    .modal-footer .btn {
+        width: 100%;
+    }
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+    .custom-modal .modal-content,
+    .table-container,
+    .stat-card {
+        background: #1E293B;
+        border-color: #334155;
+    }
+    
+    .candidates-table th,
+    .candidates-table td {
+        color: #E2E8F0;
+        border-color: #334155;
+    }
+    
+    .candidates-table thead {
+        background: linear-gradient(135deg, #0F172A 0%, #1E293B 100%);
+    }
+    
+    .form-control {
+        background: #334155;
+        border-color: #475569;
+        color: #F1F5F9;
+    }
+    
+    .form-control:focus {
+        border-color: #4361ee;
+        background: #334155;
+    }
+    
+    .text-muted {
+        color: #94A3B8;
+    }
+}
+
+/* Print Styles */
+@media print {
+    .custom-modal,
+    .modal-overlay,
+    .btn {
+        display: none !important;
+    }
+    
+    .table-container {
+        box-shadow: none;
+        border: 1px solid #000;
+    }
+    
+    .candidates-table {
+        border-collapse: collapse;
+    }
+    
+    .candidates-table th {
+        background: #f0f0f0 !important;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+    }
+}
+</style>
+
+<!-- JavaScript Configuration -->
+
+
+
 <script src="{{ asset('js/dashboard/bobot.js') }}"></script>
+<script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
+<script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
+
 @endsection

@@ -1,1080 +1,611 @@
+// Configuration
+const API_BASE_URL = '/api/kandidat';
+let currentPage = 1;
+let itemsPerPage = 10;
+let totalItems = 0;
+let allKandidatData = [];
+let selectedKandidatIds = [];
+let currentPeriode = '';
+let availablePeriodes = [];
+
+// Initialize on page load
 document.addEventListener('DOMContentLoaded', function() {
-    // Global variables
-    let candidates = [];
-    let filteredCandidates = [];
-    let selectedCandidates = [];
-    let currentPage = 1;
-    let itemsPerPage = 10;
-    let currentPeriode = '2024-01';
-    
-    // Initialize
-    loadCandidates();
     initializeEventListeners();
+    loadKandidatData();
+});
+
+// Event Listeners
+function initializeEventListeners() {
+    // Periode selector
+    document.getElementById('periodeSelect').addEventListener('change', handlePeriodeChange);
     
-    // Load candidates data
-    function loadCandidates() {
-        // Try to load from localStorage first
-        const savedCandidates = localStorage.getItem('candidatesData');
-        const savedPeriode = localStorage.getItem('currentPeriode');
+    // Search input
+    document.getElementById('searchInput').addEventListener('input', handleSearch);
+    
+    // Buttons
+    document.getElementById('btnTambahBaru').addEventListener('click', openTambahModal);
+    document.getElementById('btnImport').addEventListener('click', handleImport);
+    
+    // Pagination
+    document.getElementById('itemsPerPage').addEventListener('change', handleItemsPerPageChange);
+    document.getElementById('btnPrev').addEventListener('click', () => changePage(currentPage - 1));
+    document.getElementById('btnNext').addEventListener('click', () => changePage(currentPage + 1));
+    
+    
+    // Batch actions
+    document.getElementById('btnBatchDelete').addEventListener('click', handleBatchDelete);
+    document.getElementById('btnBatchExport').addEventListener('click', handleBatchExport);
+    document.getElementById('btnBatchReview').addEventListener('click', handleBatchReview);
+}
+
+// Load Data from API
+async function loadKandidatData(periode = null) {
+    try {
+        showLoading();
         
-        if (savedPeriode) {
-            currentPeriode = savedPeriode;
-            document.getElementById('periodeSelect').value = currentPeriode;
-            updatePeriodeInfo();
+        const url = periode ? `${API_BASE_URL}?periode=${periode}` : API_BASE_URL;
+        const response = await fetch(url);
+        
+        if (!response.ok) {
+            throw new Error('Gagal memuat data');
         }
         
-        if (savedCandidates) {
-            try {
-                const data = JSON.parse(savedCandidates);
-                if (data[currentPeriode]) {
-                    candidates = data[currentPeriode];
-                } else {
-                    candidates = getSampleCandidates();
-                }
-            } catch (e) {
-                console.error('Error loading candidates data:', e);
-                candidates = getSampleCandidates();
-            }
-        } else {
-            candidates = getSampleCandidates();
-        }
+        const result = await response.json();
+        allKandidatData = result.data || [];
         
-        updateUI();
-    }
-    
-    function getSampleCandidates() {
-        return [
-            {
-                id: 1,
-                name: 'Andi Pratama',
-                scores: { pengalaman: 5, jarak: 5, komunikasi: 3, fleksibilitas: 4 },
-                createdAt: '2024-01-15',
-                status: 'recommended'
-            },
-            {
-                id: 2,
-                name: 'Budi Santoso',
-                scores: { pengalaman: 4, jarak: 4, komunikasi: 4, fleksibilitas: 3 },
-                createdAt: '2024-01-16',
-                status: 'qualified'
-            },
-            {
-                id: 3,
-                name: 'Cindy Wijaya',
-                scores: { pengalaman: 3, jarak: 3, komunikasi: 3, fleksibilitas: 3 },
-                createdAt: '2024-01-17',
-                status: 'qualified'
-            },
-            {
-                id: 4,
-                name: 'Dian Permata',
-                scores: { pengalaman: 2, jarak: 4, komunikasi: 2, fleksibilitas: 2 },
-                createdAt: '2024-01-18',
-                status: 'needs-review'
-            },
-            {
-                id: 5,
-                name: 'Eko Putra',
-                scores: { pengalaman: 5, jarak: 3, komunikasi: 5, fleksibilitas: 4 },
-                createdAt: '2024-01-19',
-                status: 'recommended'
-            },
-            {
-                id: 6,
-                name: 'Fitriani Sari',
-                scores: { pengalaman: 4, jarak: 5, komunikasi: 4, fleksibilitas: 5 },
-                createdAt: '2024-01-20',
-                status: 'recommended'
-            },
-            {
-                id: 7,
-                name: 'Gunawan Wijaya',
-                scores: { pengalaman: 3, jarak: 4, komunikasi: 2, fleksibilitas: 3 },
-                createdAt: '2024-01-21',
-                status: 'needs-review'
-            },
-            {
-                id: 8,
-                name: 'Hana Putri',
-                scores: { pengalaman: 5, jarak: 2, komunikasi: 4, fleksibilitas: 5 },
-                createdAt: '2024-01-22',
-                status: 'qualified'
-            },
-            {
-                id: 9,
-                name: 'Irfan Maulana',
-                scores: { pengalaman: 4, jarak: 4, komunikasi: 5, fleksibilitas: 4 },
-                createdAt: '2024-01-23',
-                status: 'recommended'
-            },
-            {
-                id: 10,
-                name: 'Jihan Aulia',
-                scores: { pengalaman: 2, jarak: 3, komunikasi: 2, fleksibilitas: 2 },
-                createdAt: '2024-01-24',
-                status: 'needs-review'
-            }
-        ];
-    }
-    
-    function calculateFinalScore(candidate) {
-        const scores = candidate.scores;
-        const average = (scores.pengalaman + scores.jarak + scores.komunikasi + scores.fleksibilitas) / 4;
-        return parseFloat(average.toFixed(2));
-    }
-    
-    function updateUI() {
-        updateStats();
-        updateTable();
-        updatePagination();
-        updateBatchActions();
+        // Extract dan populate periode dari data
+        extractAndPopulatePeriodes();
+        
+        updateStatistics();
+        renderTable();
         updateLastUpdate();
+        
+        hideLoading();
+    } catch (error) {
+        console.error('Error loading data:', error);
+        showNotification('Gagal memuat data kandidat', 'error');
+        hideLoading();
     }
+}
+
+// Extract dan Populate Periode Selector
+function extractAndPopulatePeriodes() {
+    // Extract unique periode dari data
+    const periodes = new Set();
     
-    function updateStats() {
-        const total = candidates.length;
-        const topRated = candidates.filter(c => calculateFinalScore(c) >= 4.5).length;
-        const pendingReview = candidates.filter(c => calculateFinalScore(c) <= 3.0).length;
-        
-        document.getElementById('totalKandidat').textContent = total;
-        document.getElementById('topRated').textContent = topRated;
-        document.getElementById('pendingReview').textContent = pendingReview;
-        document.getElementById('activePeriod').textContent = getPeriodeText(currentPeriode);
-    }
-    
-    function updateTable() {
-        const tbody = document.getElementById('candidatesTableBody');
-        const emptyState = document.getElementById('emptyState');
-        
-        // Apply filters
-        filterCandidates();
-        
-        if (filteredCandidates.length === 0) {
-            tbody.innerHTML = '';
-            emptyState.classList.add('visible');
-            document.getElementById('paginationContainer').style.display = 'none';
-            return;
+    allKandidatData.forEach(kandidat => {
+        if (kandidat.created_at) {
+            const date = new Date(kandidat.created_at);
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const periodeValue = `${year}-${month}`;
+            periodes.add(periodeValue);
         }
-        
-        emptyState.classList.remove('visible');
-        document.getElementById('paginationContainer').style.display = 'flex';
-        
-        // Get current page data
-        const startIndex = (currentPage - 1) * itemsPerPage;
-        const endIndex = Math.min(startIndex + itemsPerPage, filteredCandidates.length);
-        const pageCandidates = filteredCandidates.slice(startIndex, endIndex);
-        
-        // Build table rows
-        let tableHTML = '';
-        pageCandidates.forEach((candidate, index) => {
-            const finalScore = calculateFinalScore(candidate);
-            const isSelected = selectedCandidates.includes(candidate.id);
-            
-            const getRatingClass = (score) => {
-                if (score >= 4.5) return 'rating-excellent';
-                if (score >= 3.5) return 'rating-good';
-                if (score >= 2.5) return 'rating-fair';
-                return 'rating-poor';
-            };
-            
-            const getRatingText = (score) => {
-                if (score >= 4.5) return 'Sangat Baik';
-                if (score >= 3.5) return 'Baik';
-                if (score >= 2.5) return 'Cukup';
-                return 'Kurang';
-            };
-            
-            const getStatusClass = (status) => {
-                switch (status) {
-                    case 'recommended': return 'status-recommended';
-                    case 'qualified': return 'status-qualified';
-                    case 'needs-review': return 'status-needs-review';
-                    default: return 'status-pending';
-                }
-            };
-            
-            const getStatusText = (status) => {
-                switch (status) {
-                    case 'recommended': return 'Sudah di hitung';
-                    case 'qualified': return 'Sedang di hitung';
-                    case 'needs-review': return 'Belum di hitung';
-                    default: return 'Pending';
-                }
-            };
-            
-            const getScoreColor = (score) => {
-                if (score >= 4.0) return '#4CAF50';
-                if (score >= 3.0) return '#FF9800';
-                if (score >= 2.0) return '#F44336';
-                return '#9E9E9E';
-            };
-            
-            tableHTML += `
-                <tr class="${isSelected ? 'selected' : ''}">
-                    <td>
-                        <input type="checkbox" class="candidate-checkbox" data-id="${candidate.id}" ${isSelected ? 'checked' : ''}>
-                    </td>
-                    <td>${startIndex + index + 1}</td>
-                    <td>
-                        <strong>${candidate.name}</strong><br>
-                        <small style="color: #666;">ID: ${candidate.id}</small>
-                    </td>
-                    <td>
-                        <span class="rating-badge ${getRatingClass(candidate.scores.pengalaman)}">
-                            ${getRatingText(candidate.scores.pengalaman)} (${candidate.scores.pengalaman})
-                        </span>
-                    </td>
-                    <td>
-                        <span class="rating-badge ${getRatingClass(candidate.scores.jarak)}">
-                            ${getRatingText(candidate.scores.jarak)} (${candidate.scores.jarak})
-                        </span>
-                    </td>
-                    <td>
-                        <span class="rating-badge ${getRatingClass(candidate.scores.komunikasi)}">
-                            ${getRatingText(candidate.scores.komunikasi)} (${candidate.scores.komunikasi})
-                        </span>
-                    </td>
-                    <td>
-                        <span class="rating-badge ${getRatingClass(candidate.scores.fleksibilitas)}">
-                            ${getRatingText(candidate.scores.fleksibilitas)} (${candidate.scores.fleksibilitas})
-                        </span>
-                    </td>
-                    <td class="score-cell">
-                        <div class="score-value">${finalScore.toFixed(2)}</div>
-                        <div class="score-progress">
-                            <div class="score-progress-fill" style="width: ${(finalScore / 5) * 100}%; background: ${getScoreColor(finalScore)}"></div>
-                        </div>
-                    </td>
-                    <td>
-                        <span class="status-badge ${getStatusClass(candidate.status)}">${getStatusText(candidate.status)}</span>
-                    </td>
-                    <td>
-                        <div class="action-buttons">
-                            <button class="action-btn view" data-id="${candidate.id}">
-                                <ion-icon name="eye-outline"></ion-icon>
-                            </button>
-                            <button class="action-btn edit" data-id="${candidate.id}">
-                                <ion-icon name="create-outline"></ion-icon>
-                            </button>
-                            <button class="action-btn delete" data-id="${candidate.id}">
-                                <ion-icon name="trash-outline"></ion-icon>
-                            </button>
-                        </div>
-                    </td>
-                </tr>
-            `;
-        });
-        
-        tbody.innerHTML = tableHTML;
-        
-        // Add event listeners to checkboxes and action buttons
-        addTableEventListeners();
-    }
+    });
     
-    function filterCandidates() {
-        const searchTerm = document.getElementById('searchInput').value.toLowerCase();
-        const filterPengalaman = document.getElementById('filterPengalaman').value;
-        const filterStatus = document.getElementById('filterStatus').value;
-        
-        filteredCandidates = candidates.filter(candidate => {
-            // Search filter
-            const matchesSearch = candidate.name.toLowerCase().includes(searchTerm) || 
-                                 candidate.id.toString().includes(searchTerm);
-            
-            // Pengalaman filter
-            let matchesPengalaman = true;
-            if (filterPengalaman) {
-                matchesPengalaman = candidate.scores.pengalaman.toString() === filterPengalaman;
-            }
-            
-            // Status filter
-            let matchesStatus = true;
-            if (filterStatus) {
-                matchesStatus = candidate.status === filterStatus;
-            }
-            
-            return matchesSearch && matchesPengalaman && matchesStatus;
-        });
-    }
+    // Convert ke array dan sort descending (terbaru di atas)
+    availablePeriodes = Array.from(periodes).sort((a, b) => b.localeCompare(a));
     
-    function updatePagination() {
-        const totalItems = filteredCandidates.length;
-        const totalPages = Math.ceil(totalItems / itemsPerPage);
-        const startIndex = (currentPage - 1) * itemsPerPage + 1;
-        const endIndex = Math.min(startIndex + itemsPerPage - 1, totalItems);
-        
-        document.getElementById('pageStart').textContent = startIndex;
-        document.getElementById('pageEnd').textContent = endIndex;
-        document.getElementById('totalItems').textContent = totalItems;
-        
-        // Update pagination numbers
-        const paginationNumbers = document.getElementById('paginationNumbers');
-        paginationNumbers.innerHTML = '';
-        
-        const maxVisiblePages = 5;
-        let startPage = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2));
-        let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
-        
-        if (endPage - startPage + 1 < maxVisiblePages) {
-            startPage = Math.max(1, endPage - maxVisiblePages + 1);
-        }
-        
-        for (let i = startPage; i <= endPage; i++) {
-            const pageBtn = document.createElement('button');
-            pageBtn.className = `page-number ${i === currentPage ? 'active' : ''}`;
-            pageBtn.textContent = i;
-            pageBtn.addEventListener('click', () => {
-                currentPage = i;
-                updateTable();
-                updatePagination();
-            });
-            paginationNumbers.appendChild(pageBtn);
-        }
-        
-        // Update prev/next buttons
-        document.getElementById('btnPrev').disabled = currentPage === 1;
-        document.getElementById('btnNext').disabled = currentPage === totalPages;
-    }
+    // Populate select options
+    const periodeSelect = document.getElementById('periodeSelect');
+    periodeSelect.innerHTML = '<option value="">Semua Periode</option>';
     
-    function updateBatchActions() {
-        const batchActions = document.getElementById('batchActions');
-        const selectedCount = selectedCandidates.length;
-        
-        if (selectedCount > 0) {
-            batchActions.style.display = 'flex';
-            document.getElementById('selectedCount').textContent = selectedCount;
-        } else {
-            batchActions.style.display = 'none';
-        }
-    }
-    
-    function updateLastUpdate() {
-        const now = new Date();
-        document.getElementById('lastUpdate').textContent = now.toLocaleTimeString('id-ID');
-    }
-    
-    function updatePeriodeInfo() {
-        const periodeText = getPeriodeText(currentPeriode);
-        document.getElementById('currentPeriode').textContent = periodeText;
-    }
-    
-    function getPeriodeText(periode) {
+    availablePeriodes.forEach(periode => {
         const [year, month] = periode.split('-');
         const monthNames = [
             'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
             'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
         ];
-        return `${monthNames[parseInt(month) - 1]} ${year}`;
-    }
+        const monthName = monthNames[parseInt(month) - 1];
+        const displayText = `${monthName} ${year}`;
+        
+        const option = document.createElement('option');
+        option.value = periode;
+        option.textContent = displayText;
+        periodeSelect.appendChild(option);
+    });
     
-    function addTableEventListeners() {
-        // Checkboxes
-        document.querySelectorAll('.candidate-checkbox').forEach(checkbox => {
-            checkbox.addEventListener('change', function() {
-                const candidateId = parseInt(this.getAttribute('data-id'));
-                const row = this.closest('tr');
-                
-                if (this.checked) {
-                    selectedCandidates.push(candidateId);
-                    row.classList.add('selected');
-                } else {
-                    selectedCandidates = selectedCandidates.filter(id => id !== candidateId);
-                    row.classList.remove('selected');
-                    
-                    // Uncheck select all if any checkbox is unchecked
-                    const selectAll = document.getElementById('selectAll');
-                    if (selectAll) {
-                        selectAll.checked = false;
-                        selectAll.indeterminate = false;
-                    }
-                }
-                
-                updateBatchActions();
-            });
-        });
-        
-        // Action buttons
-        document.querySelectorAll('.action-btn.view').forEach(btn => {
-            btn.addEventListener('click', function() {
-                const candidateId = this.getAttribute('data-id');
-                viewCandidate(candidateId);
-            });
-        });
-        
-        document.querySelectorAll('.action-btn.edit').forEach(btn => {
-            btn.addEventListener('click', function() {
-                const candidateId = this.getAttribute('data-id');
-                editCandidate(candidateId);
-            });
-        });
-        
-        document.querySelectorAll('.action-btn.rate').forEach(btn => {
-            btn.addEventListener('click', function() {
-                const candidateId = this.getAttribute('data-id');
-                rateCandidate(candidateId);
-            });
-        });
-        
-        document.querySelectorAll('.action-btn.delete').forEach(btn => {
-            btn.addEventListener('click', function() {
-                const candidateId = this.getAttribute('data-id');
-                deleteCandidate(candidateId);
-            });
-        });
-    }
-    
-    function initializeEventListeners() {
-        // Select All checkbox
-        const selectAll = document.getElementById('selectAll');
-        if (selectAll) {
-            selectAll.addEventListener('change', function() {
-                const checkboxes = document.querySelectorAll('.candidate-checkbox');
-                const startIndex = (currentPage - 1) * itemsPerPage;
-                const endIndex = Math.min(startIndex + itemsPerPage, filteredCandidates.length);
-                const pageCandidates = filteredCandidates.slice(startIndex, endIndex);
-                
-                if (this.checked) {
-                    // Select all on current page
-                    pageCandidates.forEach(candidate => {
-                        if (!selectedCandidates.includes(candidate.id)) {
-                            selectedCandidates.push(candidate.id);
-                        }
-                    });
-                    checkboxes.forEach(cb => cb.checked = true);
-                    document.querySelectorAll('#candidatesTableBody tr').forEach(row => {
-                        row.classList.add('selected');
-                    });
-                } else {
-                    // Deselect all on current page
-                    pageCandidates.forEach(candidate => {
-                        selectedCandidates = selectedCandidates.filter(id => id !== candidate.id);
-                    });
-                    checkboxes.forEach(cb => cb.checked = false);
-                    document.querySelectorAll('#candidatesTableBody tr').forEach(row => {
-                        row.classList.remove('selected');
-                    });
-                }
-                
-                this.indeterminate = false;
-                updateBatchActions();
-            });
-        }
-        
-        // Search input
-        document.getElementById('searchInput').addEventListener('input', function() {
-            currentPage = 1;
-            updateTable();
-            updatePagination();
-        });
-        
-        // Filter selects
-        document.getElementById('filterPengalaman').addEventListener('change', function() {
-            currentPage = 1;
-            updateTable();
-            updatePagination();
-        });
-        
-        document.getElementById('filterStatus').addEventListener('change', function() {
-            currentPage = 1;
-            updateTable();
-            updatePagination();
-        });
-        
-        // Reset filter button
-        document.getElementById('btnResetFilter').addEventListener('click', function() {
-            document.getElementById('searchInput').value = '';
-            document.getElementById('filterPengalaman').value = '';
-            document.getElementById('filterStatus').value = '';
-            currentPage = 1;
-            updateTable();
-            updatePagination();
-        });
-        
-        // Periode select
-        document.getElementById('periodeSelect').addEventListener('change', function() {
-            if (this.value) {
-                // Save current candidates data
-                saveCandidatesData();
-                
-                // Change periode
-                currentPeriode = this.value;
-                localStorage.setItem('currentPeriode', currentPeriode);
-                
-                // Load candidates for new periode
-                loadCandidates();
-                updatePeriodeInfo();
-                
-                // Reset filters
-                document.getElementById('searchInput').value = '';
-                document.getElementById('filterPengalaman').value = '';
-                document.getElementById('filterStatus').value = '';
-                selectedCandidates = [];
-            }
-        });
-        
-        // Items per page
-        document.getElementById('itemsPerPage').addEventListener('change', function() {
-            itemsPerPage = parseInt(this.value);
-            currentPage = 1;
-            updateTable();
-            updatePagination();
-        });
-        
-        // Pagination buttons
-        document.getElementById('btnPrev').addEventListener('click', function() {
-            if (currentPage > 1) {
-                currentPage--;
-                updateTable();
-                updatePagination();
-            }
-        });
-        
-        document.getElementById('btnNext').addEventListener('click', function() {
-            const totalPages = Math.ceil(filteredCandidates.length / itemsPerPage);
-            if (currentPage < totalPages) {
-                currentPage++;
-                updateTable();
-                updatePagination();
-            }
-        });
-        
-        // Tambah kandidat buttons
-        document.getElementById('btnTambahBaru').addEventListener('click', showTambahModal);
-        document.getElementById('btnTambahPertama').addEventListener('click', showTambahModal);
-        
-        // Import button
-        document.getElementById('btnImport').addEventListener('click', function() {
-            alert('Fitur import akan segera tersedia');
-        });
-        
-        // Export buttons
-        document.getElementById('btnExportData').addEventListener('click', exportAllData);
-        document.getElementById('btnBatchExport').addEventListener('click', exportSelectedData);
-        
-        // Hitung ranking button
-        document.getElementById('btnHitungRanking').addEventListener('click', function() {
-            // Check if there are enough candidates
-            if (candidates.length === 0) {
-                alert('Belum ada data kandidat untuk dihitung rankingnya.');
-                return;
-            }
-            
-            // Save data first
-            saveCandidatesData();
-            
-            // Open ranking page
-            window.location.href = '/hasil-perhitungan';
-        });
-        
-        // Batch delete button
-        document.getElementById('btnBatchDelete').addEventListener('click', function() {
-            if (selectedCandidates.length === 0) {
-                alert('Pilih kandidat terlebih dahulu.');
-                return;
-            }
-            
-            // Show batch delete modal
-            const batchDeleteModal = document.getElementById('batchDeleteModal');
-            if (batchDeleteModal) {
-                document.getElementById('batchDeleteCount').textContent = selectedCandidates.length;
-                batchDeleteModal.style.display = 'flex';
-                document.body.style.overflow = 'hidden';
-            } else {
-                if (confirm(`Hapus ${selectedCandidates.length} kandidat terpilih?`)) {
-                    deleteSelectedCandidates();
-                }
-            }
-        });
-        
-        // Batch review button
-        document.getElementById('btnBatchReview').addEventListener('click', function() {
-            if (selectedCandidates.length === 0) {
-                alert('Pilih kandidat terlebih dahulu.');
-                return;
-            }
-            
-            // Show batch review interface
-            alert(`Membuka review untuk ${selectedCandidates.length} kandidat terpilih`);
-        });
-        
-        // Refresh button
-        document.getElementById('btnRefreshData').addEventListener('click', function() {
-            loadCandidates();
-        });
-        
-        // Simpan perubahan button
-        document.getElementById('btnSimpanPerubahan').addEventListener('click', function() {
-            saveCandidatesData();
-            alert('Perubahan berhasil disimpan!');
-        });
-    }
-    
-    function showTambahModal() {
-        const tambahModal = document.getElementById('tambahModal');
-        if (tambahModal) {
-            tambahModal.style.display = 'flex';
-            document.body.style.overflow = 'hidden';
+    // Set current periode jika belum di-set atau jika currentPeriode tidak ada di list
+    if (!currentPeriode || !availablePeriodes.includes(currentPeriode)) {
+        if (availablePeriodes.length > 0) {
+            currentPeriode = availablePeriodes[0]; // Set ke periode terbaru
+            periodeSelect.value = currentPeriode;
+            updatePeriodeDisplay(currentPeriode);
         } else {
-            alert('Modal tambah kandidat belum tersedia. Silakan tambahkan komponen modal terlebih dahulu.');
+            currentPeriode = '';
+            periodeSelect.value = '';
+            updatePeriodeDisplay('Belum Ada Data');
         }
     }
-    
-    function viewCandidate(candidateId) {
-        const candidate = candidates.find(c => c.id === parseInt(candidateId));
-        if (!candidate) return;
-        
-        showDetailModal(candidate);
-    }
-    
-    function editCandidate(candidateId) {
-        const candidate = candidates.find(c => c.id === parseInt(candidateId));
-        if (!candidate) return;
-        
-        // Show edit modal
-        const editModal = document.getElementById('editModal');
-        if (editModal) {
-            // Populate form with candidate data
-            const editNamaInput = editModal.querySelector('#editNama');
-            const editPengalamanSelect = editModal.querySelector('#editPengalaman');
-            const editJarakSelect = editModal.querySelector('#editJarak');
-            const editKomunikasiSelect = editModal.querySelector('#editKomunikasi');
-            const editFleksibilitasSelect = editModal.querySelector('#editFleksibilitas');
-            
-            if (editNamaInput) editNamaInput.value = candidate.name;
-            if (editPengalamanSelect) editPengalamanSelect.value = candidate.scores.pengalaman;
-            if (editJarakSelect) editJarakSelect.value = candidate.scores.jarak;
-            if (editKomunikasiSelect) editKomunikasiSelect.value = candidate.scores.komunikasi;
-            if (editFleksibilitasSelect) editFleksibilitasSelect.value = candidate.scores.fleksibilitas;
-            
-            // Store candidate ID for update
-            editModal.setAttribute('data-candidate-id', candidateId);
-            
-            editModal.style.display = 'flex';
-            document.body.style.overflow = 'hidden';
-        } else {
-            alert('Modal edit kandidat belum tersedia. Silakan tambahkan komponen modal terlebih dahulu.');
-        }
-    }
-    
-    // function rateCandidate(candidateId) {
-    //     const candidate = candidates.find(c => c.id === parseInt(candidateId));
-    //     if (!candidate) return;
-        
-    //     // Show rating modal or interface
-    //     alert(`Berikan rating untuk ${candidate.name}:\n\nCurrent Scores:\nPengalaman: ${candidate.scores.pengalaman}/5\nJarak: ${candidate.scores.jarak}/5\nKomunikasi: ${candidate.scores.komunikasi}/5\nFleksibilitas: ${candidate.scores.fleksibilitas}/5\n\nSkor Akhir: ${calculateFinalScore(candidate).toFixed(2)}`);
-    // }
-    
-    function deleteCandidate(candidateId) {
-        const candidate = candidates.find(c => c.id === parseInt(candidateId));
-        if (!candidate) return;
-        
-        // Show delete modal
-        const hapusModal = document.getElementById('hapusModal');
-        if (hapusModal) {
-            // Populate modal with candidate data
-            const deleteNama = document.getElementById('deleteNama');
-            const deletePosisi = document.getElementById('deletePosisi');
-            const deleteSkor = document.getElementById('deleteSkor');
-            
-            if (deleteNama) deleteNama.textContent = candidate.name;
-            if (deletePosisi) {
-                const scoresText = `Pengalaman: ${candidate.scores.pengalaman}/5, Jarak: ${candidate.scores.jarak}/5, Komunikasi: ${candidate.scores.komunikasi}/5, Fleksibilitas: ${candidate.scores.fleksibilitas}/5`;
-                deletePosisi.textContent = scoresText;
-            }
-            if (deleteSkor) deleteSkor.textContent = calculateFinalScore(candidate).toFixed(2);
-            
-            // Store candidate ID for deletion
-            hapusModal.setAttribute('data-candidate-id', candidateId);
-            
-            hapusModal.style.display = 'flex';
-            document.body.style.overflow = 'hidden';
-        } else {
-            if (confirm(`Hapus kandidat "${candidate.name}"?`)) {
-                performDeleteCandidate(candidateId);
-            }
-        }
-    }
-    
-    function performDeleteCandidate(candidateId) {
-        candidates = candidates.filter(c => c.id !== parseInt(candidateId));
-        
-        // Remove from selected candidates if present
-        selectedCandidates = selectedCandidates.filter(id => id !== parseInt(candidateId));
-        
-        // Update UI
-        updateUI();
-        saveCandidatesData();
-    }
-    
-    function deleteSelectedCandidates() {
-        candidates = candidates.filter(c => !selectedCandidates.includes(c.id));
-        selectedCandidates = [];
-        
-        // Update UI
-        updateUI();
-        saveCandidatesData();
-        
-        // Close modal if open
-        const batchDeleteModal = document.getElementById('batchDeleteModal');
-        if (batchDeleteModal) {
-            batchDeleteModal.style.display = 'none';
-            document.body.style.overflow = 'auto';
-        }
-        
-        alert('Kandidat terpilih berhasil dihapus!');
-    }
-    
-    function exportAllData() {
-        const data = candidates.map(candidate => ({
-            ID: candidate.id,
-            Nama: candidate.name,
-            Pengalaman: candidate.scores.pengalaman,
-            Jarak: candidate.scores.jarak,
-            Komunikasi: candidate.scores.komunikasi,
-            Fleksibilitas: candidate.scores.fleksibilitas,
-            Skor_Akhir: calculateFinalScore(candidate).toFixed(2),
-            Status: candidate.status,
-            Tanggal_Daftar: candidate.createdAt
-        }));
-        
-        exportToCSV(data, `data-kandidat-${currentPeriode}`);
-    }
-    
-    function exportSelectedData() {
-        const selectedData = candidates
-            .filter(c => selectedCandidates.includes(c.id))
-            .map(candidate => ({
-                ID: candidate.id,
-                Nama: candidate.name,
-                Pengalaman: candidate.scores.pengalaman,
-                Jarak: candidate.scores.jarak,
-                Komunikasi: candidate.scores.komunikasi,
-                Fleksibilitas: candidate.scores.fleksibilitas,
-                Skor_Akhir: calculateFinalScore(candidate).toFixed(2),
-                Status: candidate.status,
-                Tanggal_Daftar: candidate.createdAt
-            }));
-        
-        if (selectedData.length === 0) {
-            alert('Tidak ada kandidat yang dipilih untuk diexport.');
-            return;
-        }
-        
-        exportToCSV(selectedData, `kandidat-terpilih-${currentPeriode}`);
-    }
-    
-    function exportToCSV(data, filename) {
-        const headers = Object.keys(data[0] || {});
-        const csvContent = [
-            headers.join(','),
-            ...data.map(row => headers.map(header => `"${row[header]}"`).join(','))
-        ].join('\n');
-        
-        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `${filename}-${new Date().toISOString().slice(0, 10)}.csv`;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
-        
-        alert('Data berhasil diexport!');
-    }
-    
-    function saveCandidatesData() {
-        const allData = JSON.parse(localStorage.getItem('candidatesData') || '{}');
-        allData[currentPeriode] = candidates;
-        localStorage.setItem('candidatesData', JSON.stringify(allData));
-    }
-    
-    // Function untuk menambahkan kandidat baru dari modal
-    window.addNewCandidate = function(candidateData) {
-        // Generate new ID
-        const newId = candidates.length > 0 ? Math.max(...candidates.map(c => c.id)) + 1 : 1;
-        
-        const newCandidate = {
-            id: newId,
-            name: candidateData.nama,
-            scores: {
-                pengalaman: parseInt(candidateData.pengalaman),
-                jarak: parseInt(candidateData.jarak),
-                komunikasi: parseInt(candidateData.komunikasi),
-                fleksibilitas: parseInt(candidateData.fleksibilitas)
-            },
-            createdAt: new Date().toISOString().split('T')[0],
-            status: 'pending'
-        };
-        
-        // Calculate status based on score
-        const finalScore = calculateFinalScore(newCandidate);
-        if (finalScore >= 4.0) {
-            newCandidate.status = 'recommended';
-        } else if (finalScore >= 3.0) {
-            newCandidate.status = 'qualified';
-        } else {
-            newCandidate.status = 'needs-review';
-        }
-        
-        candidates.push(newCandidate);
-        
-        // Update UI
-        updateUI();
-        saveCandidatesData();
-        
-        // Close modal
-        const tambahModal = document.getElementById('tambahModal');
-        if (tambahModal) {
-            tambahModal.style.display = 'none';
-            document.body.style.overflow = 'auto';
-        }
-        
-        alert('Kandidat baru berhasil ditambahkan!');
-    };
-    
-    // Function untuk update kandidat dari modal edit
-    window.updateCandidate = function(candidateData) {
-        const candidateId = parseInt(document.getElementById('editModal').getAttribute('data-candidate-id'));
-        const candidateIndex = candidates.findIndex(c => c.id === candidateId);
-        
-        if (candidateIndex !== -1) {
-            candidates[candidateIndex] = {
-                ...candidates[candidateIndex],
-                name: candidateData.nama,
-                scores: {
-                    pengalaman: parseInt(candidateData.pengalaman),
-                    jarak: parseInt(candidateData.jarak),
-                    komunikasi: parseInt(candidateData.komunikasi),
-                    fleksibilitas: parseInt(candidateData.fleksibilitas)
-                }
-            };
-            
-            // Update status based on new score
-            const finalScore = calculateFinalScore(candidates[candidateIndex]);
-            if (finalScore >= 4.0) {
-                candidates[candidateIndex].status = 'recommended';
-            } else if (finalScore >= 3.0) {
-                candidates[candidateIndex].status = 'qualified';
-            } else {
-                candidates[candidateIndex].status = 'needs-review';
-            }
-            
-            // Update UI
-            updateUI();
-            saveCandidatesData();
-            
-            // Close modal
-            const editModal = document.getElementById('editModal');
-            if (editModal) {
-                editModal.style.display = 'none';
-                document.body.style.overflow = 'auto';
-            }
-            
-            alert('Data kandidat berhasil diperbarui!');
-        }
-    };
-    
-    // Function untuk konfirmasi hapus kandidat dari modal
-    window.confirmDelete = function() {
-        const candidateId = document.getElementById('hapusModal').getAttribute('data-candidate-id');
-        performDeleteCandidate(candidateId);
-        
-        // Close modal
-        const hapusModal = document.getElementById('hapusModal');
-        if (hapusModal) {
-            hapusModal.style.display = 'none';
-            document.body.style.overflow = 'auto';
-        }
-        
-        alert('Kandidat berhasil dihapus!');
-    };
-    
-    // Function untuk konfirmasi batch delete
-    window.confirmBatchDelete = function() {
-        deleteSelectedCandidates();
-    };
-});
+}
 
-    // close modal
-    document.addEventListener('DOMContentLoaded', function() {
-    
-    // Function untuk close modal
-    function closeModal(modal) {
-        if (modal) {
-            modal.style.display = 'none';
-            document.body.style.overflow = 'auto';
-        }
+// Update Periode Display
+function updatePeriodeDisplay(periodeValue) {
+    if (!periodeValue || periodeValue === 'Belum Ada Data') {
+        document.getElementById('currentPeriode').textContent = 'Belum Ada Data';
+        document.getElementById('activePeriod').textContent = '-';
+        return;
     }
     
-    // Function untuk open modal
-    function openModal(modal) {
+    const [year, month] = periodeValue.split('-');
+    const monthNames = [
+        'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
+        'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
+    ];
+    const monthName = monthNames[parseInt(month) - 1];
+    const displayText = `${monthName} ${year}`;
+    
+    document.getElementById('currentPeriode').textContent = displayText;
+    document.getElementById('activePeriod').textContent = `${monthName.substring(0, 3)} ${year}`;
+}
+
+// Update Statistics
+function updateStatistics() {
+    const total = allKandidatData.length;
+    const topRated = allKandidatData.filter(k => k.status === 'Lolos').length;
+    const needReview = allKandidatData.filter(k => k.status === 'Pending' || !k.status).length;
+    
+    document.getElementById('totalKandidat').textContent = total;
+    document.getElementById('topRated').textContent = topRated;
+    document.getElementById('pendingReview').textContent = needReview;
+    
+    totalItems = total;
+}
+
+// Render Table
+function renderTable() {
+    const tbody = document.getElementById('candidatesTableBody');
+    const emptyState = document.getElementById('emptyState');
+    const paginationContainer = document.getElementById('paginationContainer');
+    
+    if (allKandidatData.length === 0) {
+        tbody.innerHTML = '';
+        emptyState.style.display = 'flex';
+        paginationContainer.style.display = 'none';
+        return;
+    }
+    
+    emptyState.style.display = 'none';
+    paginationContainer.style.display = 'flex';
+    
+    // Pagination calculation
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const endIndex = Math.min(startIndex + itemsPerPage, allKandidatData.length);
+    const pageData = allKandidatData.slice(startIndex, endIndex);
+    
+    // Render rows
+    tbody.innerHTML = pageData.map((kandidat, index) => `
+        <tr data-id="${kandidat.id}">
+            <td>${startIndex + index + 1}</td>
+            <td>
+                <div class="candidate-info">
+                    <div class="candidate-avatar">
+                        ${kandidat.nama.charAt(0).toUpperCase()}
+                    </div>
+                    <div class="candidate-details">
+                        <strong>${kandidat.nama}</strong>
+                        <span class="candidate-id">ID: ${kandidat.id}</span>
+                    </div>
+                </div>
+            </td>
+            <td>
+                <span class="status-badge status-${(kandidat.status || 'pending').toLowerCase()}">
+                    ${kandidat.status || 'Pending'}
+                </span>
+            </td>
+            <td>
+                <div class="action-buttons">
+                    <button class="btn-action btn-view" onclick="viewKandidat(${kandidat.id})" title="Lihat Detail">
+                        <ion-icon name="eye-outline"></ion-icon>
+                    </button>
+                    <button class="btn-action btn-edit" onclick="editKandidat(${kandidat.id})" title="Edit">
+                        <ion-icon name="create-outline"></ion-icon>
+                    </button>
+                    <button class="btn-action btn-delete" onclick="deleteKandidat(${kandidat.id})" title="Hapus">
+                        <ion-icon name="trash-outline"></ion-icon>
+                    </button>
+                </div>
+            </td>
+        </tr>
+    `).join('');
+    
+    // Add event listeners to checkboxes
+    document.querySelectorAll('.row-checkbox').forEach(checkbox => {
+        checkbox.addEventListener('change', handleRowCheckboxChange);
+    });
+    
+    updatePagination();
+}
+
+// Update Pagination
+function updatePagination() {
+    const totalPages = Math.ceil(totalItems / itemsPerPage);
+    const startItem = (currentPage - 1) * itemsPerPage + 1;
+    const endItem = Math.min(currentPage * itemsPerPage, totalItems);
+    
+    document.getElementById('pageStart').textContent = startItem;
+    document.getElementById('pageEnd').textContent = endItem;
+    document.getElementById('totalItems').textContent = totalItems;
+    
+    document.getElementById('btnPrev').disabled = currentPage === 1;
+    document.getElementById('btnNext').disabled = currentPage === totalPages;
+    
+    // Render page numbers
+    const paginationNumbers = document.getElementById('paginationNumbers');
+    let pagesHtml = '';
+    
+    for (let i = 1; i <= Math.min(totalPages, 5); i++) {
+        pagesHtml += `
+            <button class="pagination-number ${i === currentPage ? 'active' : ''}" 
+                onclick="changePage(${i})">
+                ${i}
+            </button>
+        `;
+    }
+    
+    paginationNumbers.innerHTML = pagesHtml;
+}
+
+// Change Page
+function changePage(page) {
+    const totalPages = Math.ceil(totalItems / itemsPerPage);
+    if (page < 1 || page > totalPages) return;
+    
+    currentPage = page;
+    renderTable();
+}
+
+// Handle Items Per Page Change
+function handleItemsPerPageChange(e) {
+    itemsPerPage = parseInt(e.target.value);
+    currentPage = 1;
+    renderTable();
+}
+
+// Handle Periode Change
+function handlePeriodeChange(e) {
+    currentPeriode = e.target.value;
+    
+    if (currentPeriode) {
+        updatePeriodeDisplay(currentPeriode);
+    } else {
+        document.getElementById('currentPeriode').textContent = 'Semua Periode';
+        document.getElementById('activePeriod').textContent = 'Semua';
+    }
+    
+    loadKandidatData(currentPeriode);
+}
+
+// Handle Search
+function handleSearch(e) {
+    const searchTerm = e.target.value.toLowerCase();
+    
+    if (!searchTerm) {
+        renderTable();
+        return;
+    }
+    
+    const filteredData = allKandidatData.filter(kandidat => 
+        kandidat.nama.toLowerCase().includes(searchTerm) ||
+        kandidat.id.toString().includes(searchTerm)
+    );
+    
+    const tempData = allKandidatData;
+    allKandidatData = filteredData;
+    totalItems = filteredData.length;
+    currentPage = 1;
+    renderTable();
+    allKandidatData = tempData;
+}
+
+// Open Tambah Modal
+function openTambahModal() {
+    const modal = document.getElementById('modalTambahKandidat');
+    if (modal) {
+        modal.style.display = 'flex';
+        document.getElementById('formTambahKandidat').reset();
+    }
+}
+
+// Tambah Kandidat
+async function tambahKandidat(formData) {
+    try {
+        const response = await fetch(API_BASE_URL, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || ''
+            },
+            body: JSON.stringify(formData)
+        });
+        
+        if (!response.ok) {
+            throw new Error('Gagal menambah kandidat');
+        }
+        
+        const result = await response.json();
+        showNotification(result.massage || 'Kandidat berhasil ditambahkan', 'success');
+        closeModal('modalTambahKandidat');
+        
+        // Reload data tanpa filter periode untuk mendapatkan semua data terbaru
+        await loadKandidatData();
+        
+        // Set periode ke yang baru saja ditambahkan jika berbeda
+        if (formData.created_at) {
+            const date = new Date(formData.created_at);
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const newPeriode = `${year}-${month}`;
+            
+            if (newPeriode !== currentPeriode) {
+                currentPeriode = newPeriode;
+                document.getElementById('periodeSelect').value = newPeriode;
+                updatePeriodeDisplay(newPeriode);
+                loadKandidatData(currentPeriode);
+            }
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        showNotification('Gagal menambah kandidat', 'error');
+    }
+}
+
+// View Kandidat
+async function viewKandidat(id) {
+    try {
+        const response = await fetch(`${API_BASE_URL}/${id}`);
+        
+        if (!response.ok) {
+            throw new Error('Gagal memuat detail kandidat');
+        }
+        
+        const result = await response.json();
+        const kandidat = result.data;
+        
+        // Populate detail modal
+        document.getElementById('detailNama').textContent = kandidat.nama;
+        document.getElementById('detailId').textContent = kandidat.id;
+        document.getElementById('detailStatus').textContent = kandidat.status || 'Pending';
+        document.getElementById('detailTanggal').textContent = new Date(kandidat.created_at).toLocaleDateString('id-ID');
+        
+        // Show modal
+        const modal = document.getElementById('modalDetailKandidat');
         if (modal) {
             modal.style.display = 'flex';
-            document.body.style.overflow = 'hidden';
         }
+    } catch (error) {
+        console.error('Error:', error);
+        showNotification('Gagal memuat detail kandidat', 'error');
     }
-    
-    // 1. Event listener untuk semua tombol close (X button)
-    document.querySelectorAll('.close-modal').forEach(button => {
-        button.addEventListener('click', function(e) {
-            e.preventDefault();
-            e.stopPropagation();
-            const modal = this.closest('.modal');
-            closeModal(modal);
+}
+
+// Edit Kandidat
+async function editKandidat(id) {
+    try {
+        const response = await fetch(`${API_BASE_URL}/${id}`);
+        
+        if (!response.ok) {
+            throw new Error('Gagal memuat data kandidat');
+        }
+        
+        const result = await response.json();
+        const kandidat = result.data;
+        
+        // Populate edit form
+        document.getElementById('editKandidatId').value = kandidat.id;
+        document.getElementById('editNama').value = kandidat.nama;
+        
+        // Show modal
+        const modal = document.getElementById('modalEditKandidat');
+        if (modal) {
+            modal.style.display = 'flex';
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        showNotification('Gagal memuat data kandidat', 'error');
+    }
+}
+
+// Update Kandidat
+async function updateKandidat(id, formData) {
+    try {
+        const response = await fetch(`${API_BASE_URL}/${id}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || ''
+            },
+            body: JSON.stringify(formData)
         });
-    });
+        
+        if (!response.ok) {
+            throw new Error('Gagal memperbarui kandidat');
+        }
+        
+        const result = await response.json();
+        showNotification(result.message || 'Kandidat berhasil diperbarui', 'success');
+        closeModal('modalEditKandidat');
+        loadKandidatData(currentPeriode);
+    } catch (error) {
+        console.error('Error:', error);
+        showNotification('Gagal memperbarui kandidat', 'error');
+    }
+}
+
+// Delete Kandidat
+async function deleteKandidat(id) {
+    // Show confirmation modal
+    document.getElementById('deleteKandidatId').value = id;
+    const kandidat = allKandidatData.find(k => k.id === id);
+    document.getElementById('deleteKandidatNama').textContent = kandidat?.nama || 'kandidat ini';
     
-    // 2. Event listener untuk click di luar modal (overlay)
-    document.querySelectorAll('.modal').forEach(modal => {
-        modal.addEventListener('click', function(e) {
-            // Hanya close jika click langsung di modal (overlay), bukan di modal-content
-            if (e.target === this) {
-                closeModal(this);
+    const modal = document.getElementById('modalHapusKandidat');
+    if (modal) {
+        modal.style.display = 'flex';
+    }
+}
+
+// Confirm Delete
+async function confirmDelete() {
+    const id = document.getElementById('deleteKandidatId').value;
+    
+    try {
+        const response = await fetch(`${API_BASE_URL}/${id}`, {
+            method: 'DELETE',
+            headers: {
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || ''
             }
         });
-    });
+        
+        if (!response.ok) {
+            throw new Error('Gagal menghapus kandidat');
+        }
+        
+        const result = await response.json();
+        showNotification(result.message || 'Kandidat berhasil dihapus', 'success');
+        closeModal('modalHapusKandidat');
+        
+        // Reload untuk update periode yang tersedia
+        await loadKandidatData();
+    } catch (error) {
+        console.error('Error:', error);
+        showNotification('Gagal menghapus kandidat', 'error');
+    }
+}
+
+// Row Checkbox Handler
+function handleRowCheckboxChange() {
+    updateSelectedIds();
+}
+
+// Update Selected IDs
+function updateSelectedIds() {
+    selectedKandidatIds = Array.from(document.querySelectorAll('.row-checkbox:checked'))
+        .map(cb => parseInt(cb.value));
     
-    // 3. Prevent close ketika click di dalam modal-content
-    document.querySelectorAll('.modal-content').forEach(content => {
-        content.addEventListener('click', function(e) {
-            e.stopPropagation();
-        });
-    });
+    const batchActions = document.getElementById('batchActions');
+    const selectedCount = document.getElementById('selectedCount');
     
-    // 4. Close modal dengan tombol ESC
-    document.addEventListener('keydown', function(e) {
-        if (e.key === 'Escape' || e.keyCode === 27) {
-            document.querySelectorAll('.modal').forEach(modal => {
-                if (modal.style.display === 'flex') {
-                    closeModal(modal);
+    if (selectedKandidatIds.length > 0) {
+        batchActions.style.display = 'flex';
+        selectedCount.textContent = selectedKandidatIds.length;
+    } else {
+        batchActions.style.display = 'none';
+    }
+}
+
+// Batch Delete
+async function handleBatchDelete() {
+    if (selectedKandidatIds.length === 0) return;
+    
+    if (!confirm(`Hapus ${selectedKandidatIds.length} kandidat terpilih?`)) return;
+    
+    try {
+        const deletePromises = selectedKandidatIds.map(id => 
+            fetch(`${API_BASE_URL}/${id}`, {
+                method: 'DELETE',
+                headers: {
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || ''
                 }
-            });
-        }
-    });
-    
-    // 5. Event listener untuk tombol Batal di setiap modal
-    document.querySelectorAll('.btn-secondary').forEach(button => {
-        button.addEventListener('click', function(e) {
-            if (this.classList.contains('close-modal') || 
-                this.textContent.includes('Batal')) {
-                e.preventDefault();
-                const modal = this.closest('.modal');
-                closeModal(modal);
-            }
-        });
-    });
-    
-    // 6. Specific handlers untuk setiap modal
-    
-    // Tambah Modal
-    const btnTambahBaru = document.getElementById('btnTambahBaru');
-    const btnTambahPertama = document.getElementById('btnTambahPertama');
-    const tambahModal = document.getElementById('tambahModal');
-    const btnCloseTambah = document.getElementById('btnCloseTambah');
-    
-    if (btnTambahBaru) {
-        btnTambahBaru.addEventListener('click', () => openModal(tambahModal));
+            })
+        );
+        
+        await Promise.all(deletePromises);
+        showNotification(`${selectedKandidatIds.length} kandidat berhasil dihapus`, 'success');
+        selectedKandidatIds = [];
+        
+        // Reload untuk update periode yang tersedia
+        await loadKandidatData();
+    } catch (error) {
+        console.error('Error:', error);
+        showNotification('Gagal menghapus kandidat', 'error');
     }
-    if (btnTambahPertama) {
-        btnTambahPertama.addEventListener('click', () => openModal(tambahModal));
-    }
-    if (btnCloseTambah) {
-        btnCloseTambah.addEventListener('click', () => closeModal(tambahModal));
-    }
+}
+
+// Batch Export
+function handleBatchExport() {
+    if (selectedKandidatIds.length === 0) return;
     
-    // Edit Modal
-    const editModal = document.getElementById('editModal');
-    const btnCloseEdit = document.getElementById('btnCloseEdit');
+    const selectedData = allKandidatData.filter(k => selectedKandidatIds.includes(k.id));
+    const csv = convertToCSV(selectedData);
+    downloadCSV(csv, 'kandidat_export.csv');
+    showNotification('Data berhasil diekspor', 'success');
+}
+
+// Batch Review
+function handleBatchReview() {
+    if (selectedKandidatIds.length === 0) return;
+    showNotification(`Review ${selectedKandidatIds.length} kandidat`, 'info');
+}
+
+// Import Handler
+function handleImport() {
+    showNotification('Fitur import akan segera tersedia', 'info');
+}
+
+// Utility Functions
+function convertToCSV(data) {
+    const headers = ['ID', 'Nama', 'Status', 'Tanggal'];
+    const rows = data.map(k => [k.id, k.nama, k.status || 'Pending', k.created_at]);
     
-    if (btnCloseEdit) {
-        btnCloseEdit.addEventListener('click', () => closeModal(editModal));
+    return [headers, ...rows].map(row => row.join(',')).join('\n');
+}
+
+function downloadCSV(csv, filename) {
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    a.click();
+    window.URL.revokeObjectURL(url);
+}
+
+function closeModal(modalId) {
+    const modal = document.getElementById(modalId);
+    if (modal) {
+        modal.style.display = 'none';
     }
+}
+
+function showLoading() {
+    document.body.style.cursor = 'wait';
+}
+
+function hideLoading() {
+    document.body.style.cursor = 'default';
+}
+
+function showNotification(message, type = 'success') {
+    // Create notification element
+    const notification = document.createElement('div');
+    notification.className = `notification notification-${type}`;
+    notification.innerHTML = `
+        <ion-icon name="${type === 'success' ? 'checkmark-circle' : type === 'error' ? 'close-circle' : 'information-circle'}-outline"></ion-icon>
+        <span>${message}</span>
+    `;
     
-    // Hapus Modal
-    const hapusModal = document.getElementById('hapusModal');
-    const btnCloseHapus = document.getElementById('btnCloseHapus');
-    const btnCancelHapus = document.getElementById('btnCancelHapus');
+    document.body.appendChild(notification);
     
-    if (btnCloseHapus) {
-        btnCloseHapus.addEventListener('click', () => closeModal(hapusModal));
-    }
-    if (btnCancelHapus) {
-        btnCancelHapus.addEventListener('click', () => closeModal(hapusModal));
-    }
+    setTimeout(() => {
+        notification.classList.add('show');
+    }, 10);
     
-    // 7. Handler untuk form submit - close modal setelah berhasil
-    const addCandidateForm = document.getElementById('addCandidateForm');
-    if (addCandidateForm) {
-        addCandidateForm.addEventListener('submit', function(e) {
-            e.preventDefault();
-            
-            // Validasi form
-            const nama = document.getElementById('nama').value;
-            const pengalaman = document.getElementById('pengalaman').value;
-            const jarak = document.getElementById('jarak').value;
-            const komunikasi = document.getElementById('komunikasi').value;
-            const fleksibilitas = document.getElementById('fleksibilitas').value;
-            
-            if (!nama || !pengalaman || !jarak || !komunikasi || !fleksibilitas) {
-                alert('Harap lengkapi semua field yang wajib diisi!');
-                return;
-            }
-            
-            // Panggil fungsi addNewCandidate (sudah ada di script utama)
-            if (typeof window.addNewCandidate === 'function') {
-                window.addNewCandidate({
-                    nama: nama,
-                    pengalaman: pengalaman,
-                    jarak: jarak,
-                    komunikasi: komunikasi,
-                    fleksibilitas: fleksibilitas
-                });
-            }
-            
-            // Reset form dan close modal
-            this.reset();
-            closeModal(tambahModal);
-        });
-    }
-    
-    // Edit Form Submit
-    const editCandidateForm = document.getElementById('editCandidateForm');
-    if (editCandidateForm) {
-        editCandidateForm.addEventListener('submit', function(e) {
-            e.preventDefault();
-            
-            // Panggil fungsi updateCandidate (sudah ada di script utama)
-            if (typeof window.updateCandidate === 'function') {
-                const editNama = document.querySelector('#editModal #nama');
-                const editPengalaman = document.querySelector('#editModal #pengalaman');
-                const editJarak = document.querySelector('#editModal #jarak');
-                const editKomunikasi = document.querySelector('#editModal #komunikasi');
-                const editFleksibilitas = document.querySelector('#editModal #fleksibilitas');
-                
-                window.updateCandidate({
-                    nama: editNama.value,
-                    pengalaman: editPengalaman.value,
-                    jarak: editJarak.value,
-                    komunikasi: editKomunikasi.value,
-                    fleksibilitas: editFleksibilitas.value
-                });
-            }
-            
-            closeModal(editModal);
-        });
-    }
-    
-    // Confirm Delete Button
-    const confirmDeleteBtn = document.getElementById('confirmDelete');
-    if (confirmDeleteBtn) {
-        confirmDeleteBtn.addEventListener('click', function() {
-            if (typeof window.confirmDelete === 'function') {
-                window.confirmDelete();
-            }
-            closeModal(hapusModal);
-        });
-    }
-    
-    console.log('✅ Modal close functionality initialized');
-});
+    setTimeout(() => {
+        notification.classList.remove('show');
+        setTimeout(() => notification.remove(), 300);
+    }, 3000);
+}
+
+function updateLastUpdate() {
+    const now = new Date();
+    const timeString = now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+    document.getElementById('lastUpdate').textContent = timeString;
+}
+
+// Make functions globally accessible
+window.viewKandidat = viewKandidat;
+window.editKandidat = editKandidat;
+window.deleteKandidat = deleteKandidat;
+window.confirmDelete = confirmDelete;
+window.changePage = changePage;

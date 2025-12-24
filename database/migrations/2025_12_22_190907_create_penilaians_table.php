@@ -11,12 +11,12 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('users', function (Blueprint $table) {
+        Schema::create('penilaians', function (Blueprint $table) {
             $table->id();
-            $table->string('name');
-            $table->string('email')->unique();
-            $table->string('password');
-            // $table->rememberToken();
+            $table->foreignId('kandidat_id')->constrained('kandidats')->onDelete('cascade');
+            $table->date('periode');
+            $table->decimal('total_skor', 5, 2)->nullable();
+            $table->string('klasifikasi')->nullable();
             $table->timestamps();
         });
     }
@@ -26,8 +26,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('users');
-        // Schema::dropIfExists('password_reset_tokens');
-        // Schema::dropIfExists('sessions');
+        Schema::dropIfExists('penilaians');
     }
 };

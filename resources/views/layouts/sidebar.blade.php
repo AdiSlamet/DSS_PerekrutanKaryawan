@@ -32,7 +32,25 @@
                 <span class="icon">
                     <ion-icon name="scale-outline"></ion-icon>
                 </span>
-                <span class="title">Bobot Kriteria</span>
+                <span class="title">Bobot</span>
+            </a>
+        </li>
+
+         <li class="{{ Request::is('kriteria*') ? 'active-menu' : '' }}">
+            <a href="/kriteria">
+                <span class="icon">
+                    <ion-icon name="scale-outline"></ion-icon>
+                </span>
+                <span class="title">Kriteria</span>
+            </a>
+        </li>
+
+          <li class="{{ Request::is('sub-kriteria*') ? 'active-menu' : '' }}">
+            <a href="/sub-kriteria">
+                <span class="icon">
+                    <ion-icon name="scale-outline"></ion-icon>
+                </span>
+                <span class="title">Sub Kriteria</span>
             </a>
         </li>
 

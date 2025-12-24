@@ -76,7 +76,7 @@
                     <ion-icon name="calendar-outline"></ion-icon>
                 </div>
                 <div class="stat-content">
-                    <h3 id="activePeriod">Jan 2024</h3>
+                    <h3 id="activePeriod">-</h3>
                     <p>Periode Aktif</p>
                 </div>
                 <div class="stat-trend">
@@ -95,23 +95,12 @@
                 <label>Periode Seleksi</label>
                 <div class="periode-selector">
                     <select id="periodeSelect" class="periode-select">
-                        <option value="">Pilih Periode</option>
-                        <option value="2024-01" selected>Januari 2024</option>
-                        <option value="2024-02">Februari 2024</option>
-                        <option value="2024-03">Maret 2024</option>
-                        <option value="2024-04">April 2024</option>
-                        <option value="2024-05">Mei 2024</option>
-                        <option value="2024-06">Juni 2024</option>
-                        <option value="2024-07">Juli 2024</option>
-                        <option value="2024-08">Agustus 2024</option>
-                        <option value="2024-09">September 2024</option>
-                        <option value="2024-10">Oktober 2024</option>
-                        <option value="2024-11">November 2024</option>
-                        <option value="2024-12">Desember 2024</option>
+                        <option value="">Semua Periode</option>
+                        <!-- Options akan diisi otomatis oleh JavaScript dari data -->
                     </select>
                     <div class="periode-info">
                         <ion-icon name="calendar-outline"></ion-icon>
-                        <span>Periode: <strong id="currentPeriode">Januari 2024</strong></span>
+                        <span>Periode: <strong id="currentPeriode">Semua Periode</strong></span>
                     </div>
                 </div>
             </div>
@@ -122,32 +111,6 @@
                 <div class="search-box">
                     <ion-icon name="search-outline"></ion-icon>
                     <input type="text" id="searchInput" placeholder="Nama, ID, atau kriteria...">
-                </div>
-            </div>
-            
-            <!-- Filter Controls -->
-            <div class="control-group">
-                <label>Filter Kriteria</label>
-                <div class="filter-controls">
-                    <select id="filterPengalaman" class="filter-select">
-                        <option value="">Semua Pengalaman</option>
-                        <option value="5">Sangat Baik (5)</option>
-                        <option value="4">Baik (4)</option>
-                        <option value="3">Cukup (3)</option>
-                        <option value="2">Kurang (2)</option>
-                        <option value="1">Sangat Kurang (1)</option>
-                    </select>
-                    
-                    <select id="filterStatus" class="filter-select">
-                        <option value="">Semua Status</option>
-                        <option value="recommended">Sudah di hitung</option>
-                        <option value="qualified">Sedang di hitung</option>
-                        <option value="needs-review">Belum di hitung</option>
-                    </select>
-                    
-                    <button class="btn btn-outline-secondary" id="btnResetFilter">
-                        <ion-icon name="refresh-outline"></ion-icon> Reset
-                    </button>
                 </div>
             </div>
         </div>
@@ -165,16 +128,8 @@
             <table class="candidates-table" id="candidatesTable">
                 <thead>
                     <tr>
-                        <th style="width: 60px;">
-                            <input type="checkbox" id="selectAll">
-                        </th>
                         <th style="width: 80px;">No</th>
                         <th>Nama Kandidat</th>
-                        <th style="width: 140px;">Pengalaman</th>
-                        <th style="width: 140px;">Jarak</th>
-                        <th style="width: 140px;">Komunikasi</th>
-                        <th style="width: 140px;">Fleksibilitas</th>
-                        <th style="width: 120px;">Skor</th>
                         <th style="width: 120px;">Status</th>
                         <th style="width: 150px;">Aksi</th>
                     </tr>

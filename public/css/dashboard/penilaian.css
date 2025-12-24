@@ -1,0 +1,944 @@
+/* ============ PENILAIAN PAGE ============ */
+.penilaian-page {
+    padding: 20px;
+    background: #f8fafc;
+    min-height: calc(100vh - 60px);
+}
+
+/* Header */
+.page-header {
+    background: white;
+    border-radius: 12px;
+    padding: 25px 30px;
+    margin-bottom: 25px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+    border-left: 5px solid #4361ee;
+}
+
+.header-content {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.header-icon {
+    width: 50px;
+    height: 50px;
+    background: #4361ee;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.header-icon ion-icon {
+    font-size: 28px;
+    color: white;
+}
+
+.page-header h1 {
+    font-size: 24px;
+    font-weight: 600;
+    color: #2d3748;
+    margin-bottom: 5px;
+}
+
+.page-subtitle {
+    font-size: 14px;
+    color: #718096;
+}
+
+.header-actions .btn {
+    background: #4361ee;
+    color: white;
+    padding: 12px 20px;
+    border-radius: 8px;
+    border: none;
+    font-weight: 500;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.3s ease;
+}
+
+.header-actions .btn:hover {
+    background: #3a56d4;
+    transform: translateY(-2px);
+}
+
+.header-actions .btn ion-icon {
+    font-size: 20px;
+}
+
+/* Filter Section */
+.filter-section {
+    margin-bottom: 25px;
+}
+
+.filter-card {
+    background: white;
+    border-radius: 12px;
+    padding: 25px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+}
+
+.filter-card h3 {
+    font-size: 18px;
+    font-weight: 600;
+    color: #2d3748;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.filter-card h3 ion-icon {
+    color: #4361ee;
+}
+
+.filter-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 20px;
+    align-items: end;
+}
+
+.filter-group {
+    flex: 1;
+}
+
+.filter-group label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 500;
+    color: #374151;
+    font-size: 14px;
+}
+
+.filter-group .form-control {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    font-size: 14px;
+    transition: all 0.2s;
+}
+
+.filter-group .form-control:focus {
+    outline: none;
+    border-color: #4361ee;
+    box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.1);
+}
+
+.filter-actions {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.filter-actions .btn {
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    border: none;
+    transition: all 0.2s;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.filter-actions .btn-secondary {
+    background: #6b7280;
+    color: white;
+}
+
+.filter-actions .btn-secondary:hover {
+    background: #4b5563;
+}
+
+.filter-actions .btn-primary {
+    background: #4361ee;
+    color: white;
+}
+
+.filter-actions .btn-primary:hover {
+    background: #3a56d4;
+}
+
+/* Stats Section */
+.stats-section {
+    margin-bottom: 30px;
+}
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+}
+
+.stat-card {
+    background: white;
+    border-radius: 12px;
+    padding: 25px;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    border-left: 4px solid;
+    min-height: 120px;
+}
+
+.stat-card:nth-child(1) { border-left-color: #4361ee; }
+.stat-card:nth-child(2) { border-left-color: #10b981; }
+.stat-card:nth-child(3) { border-left-color: #f59e0b; }
+
+.stat-icon {
+    width: 60px;
+    height: 60px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.stat-card:nth-child(1) .stat-icon { background: linear-gradient(135deg, #4361ee 0%, #3a0ca3 100%); }
+.stat-card:nth-child(2) .stat-icon { background: linear-gradient(135deg, #10b981 0%, #047857 100%); }
+.stat-card:nth-child(3) .stat-icon { background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); }
+
+.stat-icon ion-icon {
+    font-size: 28px;
+    color: white;
+}
+
+.stat-content h3 {
+    font-size: 32px;
+    font-weight: 700;
+    color: #2d3748;
+    line-height: 1;
+    margin-bottom: 5px;
+}
+
+.stat-content p {
+    font-size: 14px;
+    color: #718096;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-weight: 500;
+}
+
+/* Data Section */
+.data-section {
+    background: white;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+}
+
+.section-header {
+    padding: 20px 25px;
+    border-bottom: 1px solid #e9ecef;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #f8f9fa;
+}
+
+.section-header h2 {
+    font-size: 18px;
+    font-weight: 600;
+    color: #2d3748;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.section-header h2 ion-icon {
+    font-size: 20px;
+    color: #4361ee;
+}
+
+/* Table Container */
+.table-container {
+    overflow-x: auto;
+    padding: 0;
+}
+
+.penilaian-table {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 800px;
+}
+
+.penilaian-table thead {
+    background: #f8f9fa;
+}
+
+.penilaian-table th {
+    padding: 15px 20px;
+    text-align: left;
+    font-weight: 600;
+    color: #4a5568;
+    border-bottom: 2px solid #e9ecef;
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.penilaian-table td {
+    padding: 15px 20px;
+    border-bottom: 1px solid #e9ecef;
+    color: #4a5568;
+}
+
+.penilaian-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+.penilaian-table tbody tr:hover {
+    background-color: #f8fafc;
+}
+
+/* Status Badge */
+.status-badge {
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 500;
+    display: inline-block;
+    text-align: center;
+    min-width: 100px;
+}
+
+.status-badge.sudah {
+    background: #d4edda;
+    color: #155724;
+    border: 1px solid #c3e6cb;
+}
+
+.status-badge.belum {
+    background: #fff3cd;
+    color: #856404;
+    border: 1px solid #ffeaa7;
+}
+
+/* Action Buttons */
+.action-buttons {
+    display: flex;
+    gap: 8px;
+}
+
+.btn-action {
+    width: 36px;
+    height: 36px;
+    border-radius: 6px;
+    border: none;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+    font-size: 14px;
+}
+
+.btn-action ion-icon {
+    font-size: 18px;
+}
+
+.btn-action.view {
+    background: #4361ee;
+    color: white;
+}
+
+.btn-action.view:hover {
+    background: #3a56d4;
+    transform: translateY(-2px);
+}
+
+.btn-action.calculate {
+    background: #10b981;
+    color: white;
+}
+
+.btn-action.calculate:hover {
+    background: #0da271;
+    transform: translateY(-2px);
+}
+
+.btn-action.delete {
+    background: #ef4444;
+    color: white;
+}
+
+.btn-action.delete:hover {
+    background: #dc2626;
+    transform: translateY(-2px);
+}
+
+/* Loading State */
+.loading-state {
+    text-align: center;
+    padding: 60px 20px;
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.loading-state .spinner {
+    width: 50px;
+    height: 50px;
+    border: 5px solid #f3f3f3;
+    border-top: 5px solid #4361ee;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin-bottom: 20px;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.loading-state p {
+    color: #718096;
+    font-size: 16px;
+    margin: 0;
+}
+
+/* Empty State */
+.empty-state {
+    text-align: center;
+    padding: 60px 20px;
+    display: none;
+}
+
+.empty-icon {
+    margin-bottom: 20px;
+}
+
+.empty-icon ion-icon {
+    font-size: 64px;
+    color: #cbd5e0;
+}
+
+.empty-state h3 {
+    font-size: 18px;
+    font-weight: 600;
+    color: #64748b;
+    margin-bottom: 8px;
+}
+
+.empty-state p {
+    font-size: 14px;
+    color: #94a3b8;
+    margin-bottom: 20px;
+}
+
+.empty-state .btn {
+    background: #4361ee;
+    color: white;
+    padding: 12px 24px;
+    border-radius: 8px;
+    border: none;
+    font-weight: 500;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.3s ease;
+}
+
+.empty-state .btn:hover {
+    background: #3a56d4;
+}
+
+/* Modal Specific Styles */
+.modal-lg {
+    max-width: 800px;
+}
+
+.modal-xl {
+    max-width: 1200px;
+}
+
+/* Form Steps */
+.form-step {
+    display: none;
+}
+
+.form-step.active {
+    display: block;
+}
+
+.step-header {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    margin-bottom: 25px;
+    padding-bottom: 15px;
+    border-bottom: 2px solid #e5e7eb;
+}
+
+.step-number {
+    width: 40px;
+    height: 40px;
+    background: #4361ee;
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    font-size: 18px;
+}
+
+.step-header h4 {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 600;
+    color: #1f2937;
+}
+
+/* Kandidat Info */
+.kandidat-info {
+    margin-top: 20px;
+}
+
+.info-card {
+    background: #f9fafb;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    padding: 20px;
+}
+
+.info-card h5 {
+    margin: 0 0 15px 0;
+    font-size: 16px;
+    font-weight: 600;
+    color: #374151;
+}
+
+.info-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 15px;
+}
+
+.info-item {
+    display: flex;
+    flex-direction: column;
+}
+
+.info-label {
+    font-size: 12px;
+    color: #6b7280;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 4px;
+}
+
+.info-value {
+    font-size: 14px;
+    color: #374151;
+    font-weight: 500;
+}
+
+/* Form Penilaian */
+.kriteria-group {
+    background: #f9fafb;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 20px;
+}
+
+.kriteria-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.kriteria-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: #374151;
+    margin: 0;
+}
+
+.kriteria-code {
+    background: #4361ee;
+    color: white;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 500;
+}
+
+.subkriteria-options {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.radio-option {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.radio-option:hover {
+    background: #f3f4f6;
+    border-color: #d1d5db;
+}
+
+.radio-option.selected {
+    background: #e3f2fd;
+    border-color: #2196f3;
+}
+
+.radio-option input[type="radio"] {
+    margin: 0;
+}
+
+.radio-label {
+    flex: 1;
+}
+
+.radio-label strong {
+    display: block;
+    margin-bottom: 4px;
+    color: #374151;
+}
+
+.radio-label small {
+    color: #6b7280;
+    font-size: 13px;
+}
+
+.nilai-display {
+    background: #e3f2fd;
+    color: #1976d2;
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-weight: 600;
+    font-size: 14px;
+    min-width: 60px;
+    text-align: center;
+}
+
+/* Step Navigation */
+.step-navigation {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+}
+
+.step-navigation .btn {
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    border: none;
+    transition: all 0.2s;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 120px;
+}
+
+.step-navigation .btn-secondary {
+    background: #6b7280;
+    color: white;
+}
+
+.step-navigation .btn-secondary:hover {
+    background: #4b5563;
+}
+
+.step-navigation .btn-primary {
+    background: #4361ee;
+    color: white;
+}
+
+.step-navigation .btn-primary:hover {
+    background: #3a56d4;
+}
+
+.step-navigation .btn-success {
+    background: #10b981;
+    color: white;
+}
+
+.step-navigation .btn-success:hover {
+    background: #0da271;
+}
+
+/* Detail Modal */
+.detail-header {
+    margin-bottom: 25px;
+    padding-bottom: 20px;
+    border-bottom: 2px solid #e5e7eb;
+}
+
+.kandidat-profile {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.profile-icon {
+    width: 60px;
+    height: 60px;
+    background: #4361ee;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.profile-icon ion-icon {
+    font-size: 32px;
+    color: white;
+}
+
+.profile-info h4 {
+    margin: 0 0 5px 0;
+    font-size: 20px;
+    font-weight: 600;
+    color: #1f2937;
+}
+
+.profile-meta {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.profile-meta .badge {
+    background: #e3f2fd;
+    color: #1976d2;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 500;
+}
+
+.profile-meta .text-muted {
+    color: #6b7280;
+    font-size: 14px;
+}
+
+.detail-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.detail-table th {
+    padding: 12px 16px;
+    text-align: left;
+    font-weight: 600;
+    color: #4a5568;
+    border-bottom: 2px solid #e9ecef;
+    font-size: 13px;
+    text-transform: uppercase;
+    background: #f8f9fa;
+}
+
+.detail-table td {
+    padding: 12px 16px;
+    border-bottom: 1px solid #e9ecef;
+    color: #4a5568;
+}
+
+.detail-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+/* Calculation Modal */
+.calculation-header {
+    margin-bottom: 25px;
+    padding-bottom: 20px;
+    border-bottom: 2px solid #e5e7eb;
+}
+
+.calculation-header h6 {
+    font-size: 16px;
+    font-weight: 600;
+    color: #374151;
+    margin-bottom: 15px;
+}
+
+.calculation-header h6 span {
+    color: #4361ee;
+}
+
+.calculation-steps {
+    display: flex;
+    flex-direction: column;
+    gap: 30px;
+}
+
+.step-section {
+    background: #f9fafb;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    padding: 20px;
+}
+
+.step-section h6 {
+    font-size: 15px;
+    font-weight: 600;
+    color: #374151;
+    margin-bottom: 15px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.calculation-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.calculation-table th {
+    padding: 12px 16px;
+    text-align: left;
+    font-weight: 600;
+    color: #4a5568;
+    border-bottom: 2px solid #e9ecef;
+    font-size: 13px;
+    text-transform: uppercase;
+    background: white;
+}
+
+.calculation-table td {
+    padding: 12px 16px;
+    border-bottom: 1px solid #e9ecef;
+    color: #4a5568;
+    background: white;
+}
+
+.calculation-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+.table-responsive {
+    overflow-x: auto;
+}
+
+/* Rank Badges */
+.rank-1 { background: #ffd700 !important; color: #000 !important; font-weight: bold; }
+.rank-2 { background: #c0c0c0 !important; color: #000 !important; }
+.rank-3 { background: #cd7f32 !important; color: #fff !important; }
+
+/* Responsive Design */
+@media (max-width: 1200px) {
+    .stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 768px) {
+    .penilaian-page {
+        padding: 15px;
+    }
+    
+    .page-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 15px;
+        padding: 20px;
+    }
+    
+    .header-actions .btn {
+        width: 100%;
+        justify-content: center;
+    }
+    
+    .stats-grid {
+        grid-template-columns: 1fr;
+        gap: 15px;
+    }
+    
+    .stat-card {
+        padding: 20px;
+    }
+    
+    .section-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 15px;
+    }
+    
+    .filter-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .filter-actions {
+        justify-content: flex-end;
+    }
+    
+    .penilaian-table {
+        font-size: 14px;
+    }
+    
+    .penilaian-table th,
+    .penilaian-table td {
+        padding: 12px 15px;
+    }
+    
+    .action-buttons {
+        flex-wrap: wrap;
+    }
+    
+    .btn-action {
+        width: 32px;
+        height: 32px;
+    }
+    
+    .btn-action ion-icon {
+        font-size: 16px;
+    }
+}
+
+@media (max-width: 480px) {
+    .page-header h1 {
+        font-size: 20px;
+    }
+    
+    .stat-content h3 {
+        font-size: 28px;
+    }
+    
+    .modal-dialog {
+        margin: 10px;
+    }
+    
+    .step-navigation {
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+    
+    .step-navigation .btn {
+        flex: 1;
+        min-width: 0;
+        justify-content: center;
+    }
+}

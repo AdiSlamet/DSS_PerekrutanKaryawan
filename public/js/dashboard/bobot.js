@@ -1,591 +1,590 @@
-document.addEventListener('DOMContentLoaded', function() {
-    // Data dan konfigurasi
-    const defaultBobot = {
-        pengalaman: 30,
-        jarak: 25,
-        komunikasi: 25,
-        fleksibilitas: 20
+
+    const BOBOT_CONFIG = {
+        baseUrl: '{{ url("/") }}',
+        bobotIndex: '/api/bobot',
+        bobotStore: '/api/bobot',
+        bobotUpdate: (id) => `/api/bobot/${id}`,
+        bobotDestroy: (id) => `/api/bobot/${id}`,
+        kriteriaList: '/api/kriteria', // Untuk dropdown pilih kriteria
+        csrfToken: '{{ csrf_token() }}'
     };
     
-    const presets = {
-        default: { pengalaman: 30, jarak: 25, komunikasi: 25, fleksibilitas: 20 },
-        'experience-heavy': { pengalaman: 45, jarak: 20, komunikasi: 20, fleksibilitas: 15 },
-        balanced: { pengalaman: 25, jarak: 25, komunikasi: 25, fleksibilitas: 25 },
-        'communication-heavy': { pengalaman: 25, jarak: 20, komunikasi: 35, fleksibilitas: 20 }
-    };
-    
-    const constraints = {
-        pengalaman: { min: 10, max: 50 },
-        jarak: { min: 10, max: 40 },
-        komunikasi: { min: 10, max: 40 },
-        fleksibilitas: { min: 10, max: 40 }
-    };
-    
-    let currentBobot = { ...defaultBobot };
-    
-    // Inisialisasi
-    loadSavedSettings();
-    updateAllDisplays();
-    updateCharts();
-    updateAnalysis();
-    
-    // Event Listeners untuk Sliders
-    document.querySelectorAll('.bobot-slider').forEach(slider => {
-        slider.addEventListener('input', function() {
-            const criteria = this.getAttribute('data-criteria');
-            const newValue = parseInt(this.value);
-            
-            currentBobot[criteria] = newValue;
-            adjustOtherCriteria(criteria, newValue);
-            updateAllDisplays();
-            updateCharts();
-            updateAnalysis();
-        });
-    });
-    
-    // Event Listeners untuk Inputs
-    document.querySelectorAll('.bobot-input').forEach(input => {
-        input.addEventListener('input', function() {
-            const criteria = this.getAttribute('data-criteria');
-            let newValue = parseInt(this.value) || constraints[criteria].min;
-            
-            newValue = Math.max(constraints[criteria].min, 
-                              Math.min(constraints[criteria].max, newValue));
-            
-            currentBobot[criteria] = newValue;
-            adjustOtherCriteria(criteria, newValue);
-            updateAllDisplays();
-            updateCharts();
-            updateAnalysis();
-        });
+    console.log('Bobot Config:', BOBOT_CONFIG);
+
+
+
+class BobotManager {
+    constructor() {
+        console.log('BobotManager initialized');
+        this.bobotData = [];
+        this.kriteriaData = [];
         
-        input.addEventListener('blur', function() {
-            const criteria = this.getAttribute('data-criteria');
-            let value = parseInt(this.value) || constraints[criteria].min;
-            
-            if (value < constraints[criteria].min) {
-                this.value = constraints[criteria].min;
-                this.dispatchEvent(new Event('input'));
-            } else if (value > constraints[criteria].max) {
-                this.value = constraints[criteria].max;
-                this.dispatchEvent(new Event('input'));
+        this.initElements();
+        this.bindEvents();
+        this.loadData();
+    }
+
+    initElements() {
+        console.log('Initializing bobot elements...');
+        this.tableBody = document.getElementById('bobotTableBody');
+        this.emptyState = document.getElementById('emptyState');
+        this.loadingState = document.getElementById('loadingState');
+        
+        this.btnTambahBobot = document.getElementById('btnTambahBobot');
+        this.btnRefreshBobot = document.getElementById('btnRefreshBobot');
+        this.btnTambahPertamaBobot = document.getElementById('btnTambahPertamaBobot');
+        
+        this.totalBobot = document.getElementById('totalBobot');
+        this.totalBobotValue = document.getElementById('totalBobotValue');
+        this.averageBobot = document.getElementById('averageBobot');
+        
+        // Modal elements
+        this.modalTambah = document.getElementById('modalTambahBobot');
+        this.modalEdit = document.getElementById('modalEditBobot');
+        this.modalHapus = document.getElementById('modalHapusBobot');
+        
+        console.log('Bobot elements initialized');
+    }
+
+    bindEvents() {
+        console.log('Binding bobot events...');
+        
+        // Event tombol utama
+        this.btnTambahBobot?.addEventListener('click', () => this.openTambahModal());
+        this.btnTambahPertamaBobot?.addEventListener('click', () => this.openTambahModal());
+        this.btnRefreshBobot?.addEventListener('click', () => this.loadData());
+        
+        // Event modal tambah
+        document.getElementById('closeTambahBobot')?.addEventListener('click', () => this.closeTambahModal());
+        document.getElementById('modalOverlayTambahBobot')?.addEventListener('click', () => this.closeTambahModal());
+        document.getElementById('btnBatalTambahBobot')?.addEventListener('click', () => this.closeTambahModal());
+        document.getElementById('btnSimpanBobot')?.addEventListener('click', () => this.saveBobot());
+        
+        // Event modal edit
+        document.getElementById('closeEditBobot')?.addEventListener('click', () => this.closeEditModal());
+        document.getElementById('modalOverlayEditBobot')?.addEventListener('click', () => this.closeEditModal());
+        document.getElementById('btnBatalEditBobot')?.addEventListener('click', () => this.closeEditModal());
+        document.getElementById('btnUpdateBobot')?.addEventListener('click', () => this.updateBobot());
+        
+        // Event modal hapus
+        document.getElementById('closeHapusBobot')?.addEventListener('click', () => this.closeHapusModal());
+        document.getElementById('modalOverlayHapusBobot')?.addEventListener('click', () => this.closeHapusModal());
+        document.getElementById('btnBatalHapusBobot')?.addEventListener('click', () => this.closeHapusModal());
+        document.getElementById('btnKonfirmasiHapusBobot')?.addEventListener('click', () => this.confirmDelete());
+        
+        // ESC key untuk close modal
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                this.closeAllModals();
             }
         });
-    });
-    
-    // Tombol Increment/Decrement
-    document.querySelectorAll('.btn-increment').forEach(btn => {
-        btn.addEventListener('click', function() {
-            const criteria = this.getAttribute('data-criteria');
-            changeValue(criteria, 1);
-        });
-    });
-    
-    document.querySelectorAll('.btn-decrement').forEach(btn => {
-        btn.addEventListener('click', function() {
-            const criteria = this.getAttribute('data-criteria');
-            changeValue(criteria, -1);
-        });
-    });
-    
-    // Tombol Reset per Kriteria
-    document.querySelectorAll('.btn-reset').forEach(btn => {
-        btn.addEventListener('click', function(e) {
-            e.preventDefault();
-            const criteria = this.getAttribute('data-criteria');
-            currentBobot[criteria] = defaultBobot[criteria];
-            adjustOtherCriteria(criteria, defaultBobot[criteria]);
-            updateAllDisplays();
-            updateCharts();
-            updateAnalysis();
-            
-            showNotification(`Bobot ${criteria} direset ke ${defaultBobot[criteria]}%`, 'info');
-        });
-    });
-    
-    // Preset
-    document.querySelectorAll('[data-preset]').forEach(item => {
-        item.addEventListener('click', function(e) {
-            e.preventDefault();
-            const preset = this.getAttribute('data-preset');
-            if (presets[preset]) {
-                if (confirm(`Gunakan preset ${this.textContent.trim()}?`)) {
-                    currentBobot = { ...presets[preset] };
-                    updateAllDisplays();
-                    updateCharts();
-                    updateAnalysis();
-                    showNotification(`Preset "${this.textContent.trim()}" diterapkan`, 'success');
-                }
-            }
-        });
-    });
-    
-    // Reset All
-    document.getElementById('btnResetAll').addEventListener('click', function() {
-        if (confirm('Reset semua bobot ke nilai default?')) {
-            currentBobot = { ...defaultBobot };
-            updateAllDisplays();
-            updateCharts();
-            updateAnalysis();
-            showNotification('Semua bobot telah direset ke nilai default', 'success');
-        }
-    });
-    
-    // Simpan Perubahan
-    document.getElementById('btnSave').addEventListener('click', function() {
-        saveSettings();
-    });
-    
-    // Terapkan Sekarang
-    document.getElementById('btnApply').addEventListener('click', function() {
-        if (calculateTotal() !== 100) {
-            showNotification('Total bobot harus 100% sebelum diterapkan', 'error');
-            return;
-        }
         
-        if (confirm('Terapkan pengaturan bobot ini sekarang?')) {
-            saveSettings();
-            applyToSystem();
-        }
-    });
-    
-    // Batal
-    document.getElementById('btnCancel').addEventListener('click', function() {
-        if (hasUnsavedChanges()) {
-            if (confirm('Ada perubahan yang belum disimpan. Yakin ingin keluar?')) {
-                window.history.back();
-            }
-        } else {
-            window.history.back();
-        }
-    });
-    
-    // Panduan
-    document.getElementById('btnHelp').addEventListener('click', function() {
-        showHelpModal();
-    });
-    
-    // Navigasi Tab
-    document.querySelectorAll('.nav-tab').forEach(tab => {
-        tab.addEventListener('click', function(e) {
-            e.preventDefault();
-            
-            // Update active tab
-            document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
-            this.classList.add('active');
-            
-            // Show corresponding section
-            const target = this.getAttribute('href').substring(1);
-            showSection(target);
-        });
-    });
-    
-    // Fungsi Helper
-    function calculateTotal() {
-        return Object.values(currentBobot).reduce((sum, val) => sum + val, 0);
+        console.log('Bobot events bound successfully');
     }
-    
-    function adjustOtherCriteria(changedCriteria, newValue) {
-        const oldValue = currentBobot[changedCriteria];
-        const difference = newValue - oldValue;
-        
-        if (difference === 0) return;
-        
-        const otherCriteria = Object.keys(currentBobot).filter(c => c !== changedCriteria);
-        const adjustPerCriteria = Math.round(difference / otherCriteria.length * -1);
-        
-        otherCriteria.forEach(criteria => {
-            let newBobot = currentBobot[criteria] + adjustPerCriteria;
-            newBobot = Math.max(constraints[criteria].min, 
-                              Math.min(constraints[criteria].max, newBobot));
-            currentBobot[criteria] = newBobot;
-        });
-        
-        // Ensure total is 100
-        let total = calculateTotal();
-        let attempts = 0;
-        
-        while (total !== 100 && attempts < 10) {
-            const diff = 100 - total;
-            const criteriaToAdjust = otherCriteria[attempts % otherCriteria.length];
-            
-            let newBobot = currentBobot[criteriaToAdjust] + diff;
-            newBobot = Math.max(constraints[criteriaToAdjust].min, 
-                              Math.min(constraints[criteriaToAdjust].max, newBobot));
-            
-            currentBobot[criteriaToAdjust] = newBobot;
-            total = calculateTotal();
-            attempts++;
-        }
-    }
-    
-    function changeValue(criteria, delta) {
-        let newValue = currentBobot[criteria] + delta;
-        newValue = Math.max(constraints[criteria].min, 
-                          Math.min(constraints[criteria].max, newValue));
-        
-        currentBobot[criteria] = newValue;
-        adjustOtherCriteria(criteria, newValue);
-        updateAllDisplays();
-        updateCharts();
-        updateAnalysis();
-    }
-    
-    function updateAllDisplays() {
-        // Update sliders and inputs
-        Object.keys(currentBobot).forEach(criteria => {
-            const slider = document.getElementById(`slider${capitalizeFirst(criteria)}`);
-            const input = document.getElementById(`input${capitalizeFirst(criteria)}`);
-            const currentValue = document.getElementById(`current${capitalizeFirst(criteria)}`);
-            
-            if (slider) slider.value = currentBobot[criteria];
-            if (input) input.value = currentBobot[criteria];
-            if (currentValue) currentValue.textContent = `${currentBobot[criteria]}%`;
-        });
-        
-        // Update total
-        const total = calculateTotal();
-        document.getElementById('totalBobot').textContent = `${total}%`;
-        document.getElementById('progressFill').style.width = `${total}%`;
-        
-        // Update status
-        const statusElement = document.getElementById('totalStatus');
-        if (total === 100) {
-            statusElement.innerHTML = `<span class="status-valid">
-                <ion-icon name="checkmark-circle-outline"></ion-icon>
-                Valid
-            </span>`;
-        } else {
-            statusElement.innerHTML = `<span class="status-invalid">
-                <ion-icon name="alert-circle-outline"></ion-icon>
-                ${total}%
-            </span>`;
-        }
-    }
-    
-    function updateCharts() {
-        // Update distribution bars
-        Object.keys(currentBobot).forEach(criteria => {
-            const bar = document.querySelector(`.dist-bar:nth-child(${getCriteriaIndex(criteria)})`);
-            if (bar) {
-                bar.style.width = `${currentBobot[criteria]}%`;
-                bar.querySelector('.dist-value').textContent = `${currentBobot[criteria]}%`;
-            }
-        });
-    }
-    
-    function updateAnalysis() {
-        const total = calculateTotal();
-        
-        // Find highest criteria
-        const highestCriteria = Object.keys(currentBobot).reduce((a, b) => 
-            currentBobot[a] > currentBobot[b] ? a : b
-        );
-        
-        const highestValue = currentBobot[highestCriteria];
-        document.getElementById('highestCriteria').innerHTML = 
-            `<span class="criteria-tag" style="${getCriteriaStyle(highestCriteria)}">
-                ${capitalizeFirst(highestCriteria)} (${highestValue}%)
-            </span>`;
-        
-        // Update influence level
-        const influenceElement = document.getElementById('influenceLevel');
-        if (highestValue >= 40) {
-            influenceElement.textContent = 'Sangat Tinggi';
-            influenceElement.className = 'level-very-high';
-        } else if (highestValue >= 30) {
-            influenceElement.textContent = 'Tinggi';
-            influenceElement.className = 'level-high';
-        } else {
-            influenceElement.textContent = 'Sedang';
-            influenceElement.className = 'level-medium';
-        }
-        
-        // Update balance score
-        const balanceElement = document.getElementById('balanceScore');
-        const values = Object.values(currentBobot);
-        const maxDiff = Math.max(...values) - Math.min(...values);
-        
-        if (maxDiff <= 10) {
-            balanceElement.textContent = 'Sangat Baik';
-            balanceElement.className = 'score-excellent';
-        } else if (maxDiff <= 20) {
-            balanceElement.textContent = 'Baik';
-            balanceElement.className = 'score-good';
-        } else {
-            balanceElement.textContent = 'Kurang';
-            balanceElement.className = 'score-poor';
-        }
-    }
-    
-    function getCriteriaStyle(criteria) {
-        const styles = {
-            pengalaman: 'background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);',
-            jarak: 'background: linear-gradient(135deg, #4CAF50 0%, #2E7D32 100%);',
-            komunikasi: 'background: linear-gradient(135deg, #FF9800 0%, #F57C00 100%);',
-            fleksibilitas: 'background: linear-gradient(135deg, #9C27B0 0%, #7B1FA2 100%);'
-        };
-        return styles[criteria] || '';
-    }
-    
-    function getCriteriaIndex(criteria) {
-        const order = ['pengalaman', 'jarak', 'komunikasi', 'fleksibilitas'];
-        return order.indexOf(criteria) + 1;
-    }
-    
-    function capitalizeFirst(string) {
-        return string.charAt(0).toUpperCase() + string.slice(1);
-    }
-    
-    function saveSettings() {
-        const total = calculateTotal();
-        
-        if (total !== 100) {
-            showNotification(`Total bobot harus 100%. Saat ini: ${total}%`, 'error');
-            return;
-        }
-        
-        // Save to localStorage
-        localStorage.setItem('bobotSettings', JSON.stringify(currentBobot));
-        
-        // Simulate API call
-        setTimeout(() => {
-            showNotification('Pengaturan bobot berhasil disimpan!', 'success');
-        }, 500);
-    }
-    
-    function applyToSystem() {
-        // Simulate API call
-        showNotification('Menerapkan pengaturan ke sistem...', 'info');
-        
-        setTimeout(() => {
-            showNotification('Pengaturan bobot berhasil diterapkan!', 'success');
-        }, 1500);
-    }
-    
-    function loadSavedSettings() {
-        const saved = localStorage.getItem('bobotSettings');
-        if (saved) {
-            try {
-                const savedBobot = JSON.parse(saved);
-                const total = Object.values(savedBobot).reduce((a, b) => a + b, 0);
-                
-                if (total === 100) {
-                    currentBobot = savedBobot;
-                }
-            } catch (e) {
-                console.error('Error loading saved settings:', e);
-            }
-        }
-    }
-    
-    function hasUnsavedChanges() {
-        const saved = localStorage.getItem('bobotSettings');
-        if (!saved) return JSON.stringify(defaultBobot) !== JSON.stringify(currentBobot);
+
+    async loadData() {
+        console.log('Loading bobot data...');
+        this.showLoading();
         
         try {
-            const savedBobot = JSON.parse(saved);
-            return JSON.stringify(savedBobot) !== JSON.stringify(currentBobot);
-        } catch (e) {
-            return true;
+            // Load data bobot dan kriteria secara bersamaan
+            const [bobotResponse, kriteriaResponse] = await Promise.all([
+                fetch(BOBOT_CONFIG.bobotIndex, {
+                    headers: {
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json'
+                    }
+                }),
+                fetch(BOBOT_CONFIG.kriteriaList, {
+                    headers: {
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json'
+                    }
+                })
+            ]);
+            
+            console.log('Bobot response status:', bobotResponse.status);
+            console.log('Kriteria response status:', kriteriaResponse.status);
+            
+            if (!bobotResponse.ok) throw new Error(`HTTP ${bobotResponse.status}: Gagal memuat bobot`);
+            if (!kriteriaResponse.ok) throw new Error(`HTTP ${kriteriaResponse.status}: Gagal memuat kriteria`);
+            
+            const bobotData = await bobotResponse.json();
+            const kriteriaData = await kriteriaResponse.json();
+            
+            console.log('Bobot data:', bobotData);
+            console.log('Kriteria data:', kriteriaData);
+            
+            if (bobotData.status === 'success' && kriteriaData.status === 'success') {
+                this.bobotData = bobotData.data || [];
+                this.kriteriaData = kriteriaData.data || [];
+                
+                this.renderTable();
+                this.updateStatistics();
+            } else {
+                throw new Error(bobotData.message || kriteriaData.message || 'Gagal memuat data');
+            }
+        } catch (error) {
+            console.error('Error loading data:', error);
+            this.showToast(error.message || 'Gagal memuat data', 'error');
+            this.tableBody.innerHTML = '';
+            this.emptyState.style.display = 'block';
+        } finally {
+            this.hideLoading();
         }
     }
-    
-    function showSection(sectionId) {
-        // Hide all sections
-        document.querySelectorAll('.page-content > div').forEach(div => {
-            div.style.display = 'none';
+
+    renderTable() {
+        console.log('Rendering bobot table:', this.bobotData);
+        
+        if (!this.bobotData || this.bobotData.length === 0) {
+            this.tableBody.innerHTML = '';
+            this.emptyState.style.display = 'block';
+            return;
+        }
+        
+        this.emptyState.style.display = 'none';
+        
+        let html = '';
+        
+        this.bobotData.forEach((bobot, index) => {
+            const bobotValue = parseFloat(bobot.bobot) || 0;
+            const percentage = (bobotValue * 100).toFixed(1);
+            
+            // Dapatkan info kriteria
+            const kriteria = bobot.kriteria || {};
+            const kriteriaNama = kriteria.nama || 'Tidak diketahui';
+            const kriteriaJenis = kriteria.jenis === 'benefit' ? 'Benefit' : 'Cost';
+            
+            // Tentukan class untuk bobot
+            const bobotClass = bobotValue > 0.3 ? 'bobot-tinggi' : bobotValue < 0.1 ? 'bobot-rendah' : '';
+            
+            html += `
+                <tr data-id="${bobot.id}">
+                    <td>${index + 1}</td>
+                    <td>
+                        <div class="kriteria-info">
+                            <span class="kriteria-name">${kriteriaNama}</span>
+                            <span class="kriteria-type">${kriteriaJenis}</span>
+                        </div>
+                    </td>
+                    <td>
+                        <span class="bobot-value ${bobotClass}">${bobotValue.toFixed(2)}</span>
+                    </td>
+                    <td>
+                        <span class="percentage-badge">${percentage}%</span>
+                    </td>
+                    <td>
+                        <div class="action-buttons">
+                            <button class="btn-action btn-edit" data-id="${bobot.id}" title="Edit">
+                                <ion-icon name="create-outline"></ion-icon>
+                            </button>
+                            <button class="btn-action btn-delete" data-id="${bobot.id}" title="Hapus">
+                                <ion-icon name="trash-outline"></ion-icon>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+            `;
         });
         
-        // Show selected section
-        if (sectionId === 'pengaturan') {
-            document.querySelector('.page-content').style.display = 'grid';
-        } else {
-            document.querySelector('.page-content').innerHTML = 
-                `<div class="coming-soon">
-                    <h3><ion-icon name="construct-outline"></ion-icon> Fitur ${sectionId} dalam Pengembangan</h3>
-                    <p>Fitur ini akan segera hadir dalam pembaruan berikutnya.</p>
-                </div>`;
+        this.tableBody.innerHTML = html;
+        this.bindRowEvents();
+    }
+
+    updateStatistics() {
+        const total = this.bobotData.length;
+        let totalValue = 0;
+        
+        this.bobotData.forEach(bobot => {
+            totalValue += parseFloat(bobot.bobot) || 0;
+        });
+        
+        const average = total > 0 ? totalValue / total : 0;
+        
+        this.totalBobot.textContent = total;
+        this.totalBobotValue.textContent = totalValue.toFixed(2);
+        this.averageBobot.textContent = average.toFixed(2);
+    }
+
+    // Modal Functions
+    openTambahModal() {
+        console.log('Opening tambah bobot modal');
+        
+        // Reset form
+        const form = document.getElementById('formTambahBobot');
+        if (form) {
+            form.reset();
+            // Reset validation
+            const inputs = form.querySelectorAll('.form-control');
+            inputs.forEach(input => input.classList.remove('is-invalid'));
+        }
+        
+        // Isi dropdown kriteria
+        this.populateKriteriaDropdown();
+        
+        this.closeAllModals();
+        this.modalTambah.classList.add('active');
+        document.body.style.overflow = 'hidden';
+    }
+
+    populateKriteriaDropdown() {
+        const dropdown = document.getElementById('kriteria_id');
+        if (!dropdown) return;
+        
+        // Simpan value yang dipilih sebelumnya
+        const selectedValue = dropdown.value;
+        
+        // Kosongkan dropdown
+        dropdown.innerHTML = '<option value="">Pilih Kriteria</option>';
+        
+        // Filter kriteria yang belum memiliki bobot
+        const kriteriaWithBobot = new Set(this.bobotData.map(b => b.kriteria_id));
+        const availableKriteria = this.kriteriaData.filter(k => !kriteriaWithBobot.has(k.id));
+        
+        if (availableKriteria.length === 0) {
+            dropdown.innerHTML = '<option value="">Semua kriteria sudah memiliki bobot</option>';
+            dropdown.disabled = true;
+            return;
+        }
+        
+        dropdown.disabled = false;
+        
+        // Tambahkan options
+        availableKriteria.forEach(kriteria => {
+            const option = document.createElement('option');
+            option.value = kriteria.id;
+            option.textContent = `${kriteria.nama} (${kriteria.jenis})`;
+            dropdown.appendChild(option);
+        });
+        
+        // Kembalikan value yang dipilih sebelumnya jika masih valid
+        if (selectedValue && availableKriteria.some(k => k.id == selectedValue)) {
+            dropdown.value = selectedValue;
         }
     }
-    
-    function showNotification(message, type) {
-        // Create notification element
-        const notification = document.createElement('div');
-        notification.className = `notification notification-${type}`;
-        notification.innerHTML = `
-            <ion-icon name="${type === 'success' ? 'checkmark-circle' : 
-                             type === 'error' ? 'alert-circle' : 
-                             type === 'info' ? 'information-circle' : 'alert-circle'}"></ion-icon>
-            <span>${message}</span>
-        `;
+
+    closeTambahModal() {
+        this.modalTambah.classList.remove('active');
+        document.body.style.overflow = '';
+    }
+
+    openEditModal(bobotId) {
+        const bobot = this.bobotData.find(b => b.id == bobotId);
+        if (!bobot) {
+            this.showToast('Bobot tidak ditemukan', 'error');
+            return;
+        }
         
-        // Add styles
-        notification.style.cssText = `
+        // Isi form edit
+        document.getElementById('editBobotId').value = bobot.id;
+        document.getElementById('editKriteriaNama').value = bobot.kriteria?.nama || 'Tidak diketahui';
+        document.getElementById('editBobot').value = bobot.bobot;
+        
+        this.closeAllModals();
+        this.modalEdit.classList.add('active');
+        document.body.style.overflow = 'hidden';
+    }
+
+    closeEditModal() {
+        this.modalEdit.classList.remove('active');
+        document.body.style.overflow = '';
+    }
+
+    openHapusModal(bobotId) {
+        const bobot = this.bobotData.find(b => b.id == bobotId);
+        if (!bobot) {
+            this.showToast('Bobot tidak ditemukan', 'error');
+            return;
+        }
+        
+        const kriteriaNama = bobot.kriteria?.nama || 'Tidak diketahui';
+        document.getElementById('hapusBobotInfo').textContent = 
+            `Kriteria: ${kriteriaNama}, Bobot: ${bobot.bobot}`;
+        
+        this.modalHapus.dataset.id = bobotId;
+        
+        this.closeAllModals();
+        this.modalHapus.classList.add('active');
+        document.body.style.overflow = 'hidden';
+    }
+
+    closeHapusModal() {
+        this.modalHapus.classList.remove('active');
+        document.body.style.overflow = '';
+    }
+
+    closeAllModals() {
+        document.querySelectorAll('.custom-modal').forEach(modal => {
+            modal.classList.remove('active');
+        });
+        document.body.style.overflow = '';
+    }
+
+    // CRUD Operations
+    async saveBobot() {
+        const kriteriaId = document.getElementById('kriteria_id')?.value;
+        const bobotValue = document.getElementById('bobot')?.value;
+        
+        // Validasi
+        let isValid = true;
+        
+        if (!kriteriaId) {
+            document.getElementById('kriteria_id').classList.add('is-invalid');
+            isValid = false;
+        }
+        
+        if (!bobotValue || bobotValue <= 0) {
+            document.getElementById('bobot').classList.add('is-invalid');
+            isValid = false;
+        }
+        
+        if (!isValid) {
+            this.showToast('Harap lengkapi semua field dengan benar', 'error');
+            return;
+        }
+        
+        try {
+            console.log('Saving bobot...', { kriteria_id: kriteriaId, bobot: bobotValue });
+            
+            const response = await fetch(BOBOT_CONFIG.bobotStore, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                    'X-CSRF-TOKEN': BOBOT_CONFIG.csrfToken
+                },
+                body: JSON.stringify({
+                    kriteria_id: parseInt(kriteriaId),
+                    bobot: parseFloat(bobotValue)
+                })
+            });
+            
+            console.log('Save response status:', response.status);
+            
+            const data = await response.json();
+            console.log('Save response data:', data);
+            
+            if (response.ok && data.status === 'success') {
+                this.showToast('Bobot berhasil ditambahkan', 'success');
+                this.closeTambahModal();
+                await this.loadData();
+            } else {
+                if (data.errors) {
+                    const errorMessages = Object.values(data.errors).flat().join(', ');
+                    throw new Error(errorMessages);
+                }
+                throw new Error(data.message || 'Gagal menambahkan bobot');
+            }
+        } catch (error) {
+            console.error('Error saving bobot:', error);
+            this.showToast(error.message || 'Gagal menambahkan bobot', 'error');
+        }
+    }
+
+    async updateBobot() {
+        const id = document.getElementById('editBobotId').value;
+        const bobotValue = document.getElementById('editBobot')?.value;
+        
+        if (!bobotValue || bobotValue <= 0) {
+            document.getElementById('editBobot').classList.add('is-invalid');
+            this.showToast('Nilai bobot harus diisi', 'error');
+            return;
+        }
+        
+        try {
+            console.log('Updating bobot:', { id, bobot: bobotValue });
+            
+            // Gunakan FormData untuk kompatibilitas
+            const formData = new FormData();
+            formData.append('_method', 'PUT');
+            formData.append('bobot', bobotValue);
+            
+            const response = await fetch(BOBOT_CONFIG.bobotUpdate(id), {
+                method: 'POST',
+                headers: {
+                    'Accept': 'application/json',
+                    'X-CSRF-TOKEN': BOBOT_CONFIG.csrfToken
+                },
+                body: formData
+            });
+            
+            console.log('Update response status:', response.status);
+            
+            const data = await response.json();
+            console.log('Update response data:', data);
+            
+            if (response.ok && data.status === 'success') {
+                // Update data lokal
+                const index = this.bobotData.findIndex(b => b.id == id);
+                if (index !== -1) {
+                    this.bobotData[index].bobot = parseFloat(bobotValue);
+                    this.renderTable();
+                    this.updateStatistics();
+                }
+                
+                this.showToast('Bobot berhasil diperbarui', 'success');
+                this.closeEditModal();
+                
+                // Auto refresh setelah 2 detik
+                setTimeout(() => {
+                    this.loadData();
+                }, 2000);
+                
+            } else {
+                throw new Error(data.message || 'Gagal memperbarui bobot');
+            }
+        } catch (error) {
+            console.error('Error updating bobot:', error);
+            this.showToast(error.message || 'Gagal memperbarui bobot', 'error');
+        }
+    }
+
+    async confirmDelete() {
+        const id = this.modalHapus.dataset.id;
+        
+        try {
+            console.log('Deleting bobot:', id);
+            
+            const response = await fetch(BOBOT_CONFIG.bobotDestroy(id), {
+                method: 'DELETE',
+                headers: {
+                    'Accept': 'application/json',
+                    'X-CSRF-TOKEN': BOBOT_CONFIG.csrfToken
+                }
+            });
+            
+            console.log('Delete response status:', response.status);
+            
+            const data = await response.json();
+            console.log('Delete response data:', data);
+            
+            if (response.ok && data.status === 'success') {
+                this.showToast('Bobot berhasil dihapus', 'success');
+                this.closeHapusModal();
+                await this.loadData();
+            } else {
+                throw new Error(data.message || 'Gagal menghapus bobot');
+            }
+        } catch (error) {
+            console.error('Error deleting bobot:', error);
+            this.showToast(error.message || 'Gagal menghapus bobot', 'error');
+        }
+    }
+
+    // Row Events
+    bindRowEvents() {
+        // Event untuk tombol edit
+        document.querySelectorAll('.btn-edit').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const bobotId = e.currentTarget.dataset.id;
+                this.editBobot(bobotId);
+            });
+        });
+        
+        // Event untuk tombol delete
+        document.querySelectorAll('.btn-delete').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const bobotId = e.currentTarget.dataset.id;
+                this.deleteBobot(bobotId);
+            });
+        });
+    }
+
+    editBobot(id) {
+        console.log('Editing bobot:', id);
+        this.openEditModal(id);
+    }
+
+    deleteBobot(id) {
+        console.log('Deleting bobot:', id);
+        this.openHapusModal(id);
+    }
+
+    // Utility Methods
+    showLoading() {
+        if (this.loadingState) this.loadingState.style.display = 'flex';
+        if (this.emptyState) this.emptyState.style.display = 'none';
+    }
+
+    hideLoading() {
+        if (this.loadingState) this.loadingState.style.display = 'none';
+    }
+
+    showToast(message, type = 'info') {
+        console.log(`Toast [${type}]:`, message);
+        
+        // Hapus toast sebelumnya
+        document.querySelectorAll('.toast').forEach(toast => toast.remove());
+        
+        const toast = document.createElement('div');
+        toast.className = `toast ${type}`;
+        toast.style.cssText = `
             position: fixed;
             top: 20px;
             right: 20px;
-            background: ${type === 'success' ? '#d4edda' : 
-                         type === 'error' ? '#f8d7da' : 
-                         type === 'info' ? '#d1ecf1' : '#fff3cd'};
-            color: ${type === 'success' ? '#155724' : 
-                    type === 'error' ? '#721c24' : 
-                    type === 'info' ? '#0c5460' : '#856404'};
-            padding: 15px 25px;
-            border-radius: 10px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-            z-index: 9999;
-            animation: slideInRight 0.3s ease-out;
-            border-left: 4px solid ${type === 'success' ? '#28a745' : 
-                                 type === 'error' ? '#dc3545' : 
-                                 type === 'info' ? '#17a2b8' : '#ffc107'};
+            background: white;
+            padding: 15px 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+            z-index: 1100;
+            opacity: 0;
+            transform: translateY(-20px);
+            transition: all 0.3s ease;
+            border-left: 4px solid ${type === 'success' ? '#4CAF50' : type === 'error' ? '#f44336' : '#2196F3'};
         `;
         
-        document.body.appendChild(notification);
-        
-        // Remove after 3 seconds
-        setTimeout(() => {
-            notification.style.animation = 'slideOutRight 0.3s ease-out';
-            setTimeout(() => notification.remove(), 300);
-        }, 3000);
-    }
-    
-    function showHelpModal() {
-        const helpModal = document.createElement('div');
-        helpModal.style.cssText = `
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0,0,0,0.5);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 10000;
-            padding: 20px;
-        `;
-        
-        helpModal.innerHTML = `
-            <div style="background: white; border-radius: 15px; padding: 30px; max-width: 600px; width: 100%; max-height: 80vh; overflow-y: auto;">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;">
-                    <h2 style="margin: 0; display: flex; align-items: center; gap: 10px;">
-                        <ion-icon name="help-circle-outline" style="color: #007bff;"></ion-icon>
-                        Panduan Pengaturan Bobot
-                    </h2>
-                    <button onclick="this.parentElement.parentElement.parentElement.remove()" 
-                            style="background: none; border: none; font-size: 24px; cursor: pointer; color: #666;">
-                        &times;
-                    </button>
-                </div>
-                
-                <div style="display: flex; flex-direction: column; gap: 20px;">
-                    <div>
-                        <h3 style="color: #333; margin-bottom: 10px;">Total Bobot Harus 100%</h3>
-                        <p style="color: #666; line-height: 1.6;">
-                            Sistem akan otomatis menyesuaikan bobot kriteria lainnya saat Anda mengubah satu kriteria. 
-                            Pastikan total selalu 100% sebelum menyimpan.
-                        </p>
-                    </div>
-                    
-                    <div>
-                        <h3 style="color: #333; margin-bottom: 10px;">Rentang Bobot</h3>
-                        <ul style="color: #666; line-height: 1.6; padding-left: 20px;">
-                            <li><strong>Pengalaman Kerja:</strong> 10% - 50%</li>
-                            <li><strong>Jarak Tempat Tinggal:</strong> 10% - 40%</li>
-                            <li><strong>Kemampuan Komunikasi:</strong> 10% - 40%</li>
-                            <li><strong>Fleksibilitas Kerja:</strong> 10% - 40%</li>
-                        </ul>
-                    </div>
-                    
-                    <div>
-                        <h3 style="color: #333; margin-bottom: 10px;">Tips Pengaturan</h3>
-                        <ul style="color: #666; line-height: 1.6; padding-left: 20px;">
-                            <li>Gunakan preset untuk konfigurasi cepat</li>
-                            <li>Prioritaskan kriteria yang paling penting untuk posisi</li>
-                            <li>Distribusi yang seimbang menghasilkan seleksi yang objektif</li>
-                            <li>Simpan pengaturan setelah selesai</li>
-                        </ul>
-                    </div>
-                    
-                    <div>
-                        <h3 style="color: #333; margin-bottom: 10px;">Analisis Dampak</h3>
-                        <p style="color: #666; line-height: 1.6;">
-                            Panel analisis akan menampilkan dampak dari pengaturan bobot Anda terhadap proses seleksi.
-                        </p>
-                    </div>
-                </div>
-                
-                <button onclick="this.parentElement.parentElement.remove()" 
-                        style="margin-top: 25px; width: 100%; padding: 12px; background: #007bff; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600;">
-                    Mengerti
-                </button>
+        toast.innerHTML = `
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <ion-icon name="${type === 'success' ? 'checkmark-circle' : type === 'error' ? 'alert-circle' : 'information-circle'}-outline" 
+                         style="color: ${type === 'success' ? '#4CAF50' : type === 'error' ? '#f44336' : '#2196F3'}; font-size: 20px;"></ion-icon>
+                <span>${message}</span>
             </div>
         `;
         
-        document.body.appendChild(helpModal);
+        document.body.appendChild(toast);
+        
+        setTimeout(() => {
+            toast.style.opacity = '1';
+            toast.style.transform = 'translateY(0)';
+        }, 10);
+        
+        setTimeout(() => {
+            toast.style.opacity = '0';
+            toast.style.transform = 'translateY(-20px)';
+            setTimeout(() => {
+                toast.remove();
+            }, 300);
+        }, 3000);
     }
-    
-    // Add CSS for animations
-    const style = document.createElement('style');
-    style.textContent = `
-        @keyframes slideInRight {
-            from { transform: translateX(100%); opacity: 0; }
-            to { transform: translateX(0); opacity: 1; }
-        }
-        @keyframes slideOutRight {
-            from { transform: translateX(0); opacity: 1; }
-            to { transform: translateX(100%); opacity: 0; }
-        }
-        .status-invalid {
-            color: #dc3545 !important;
-            background: #f8d7da !important;
-            padding: 8px 15px !important;
-            border-radius: 20px !important;
-            display: flex !important;
-            align-items: center !important;
-            gap: 6px !important;
-        }
-        .level-very-high {
-            color: #721c24 !important;
-            background: #f8d7da !important;
-        }
-        .level-medium {
-            color: #856404 !important;
-            background: #fff3cd !important;
-        }
-        .score-excellent {
-            color: #155724 !important;
-            background: #d4edda !important;
-        }
-        .score-poor {
-            color: #721c24 !important;
-            background: #f8d7da !important;
-        }
-        .coming-soon {
-            grid-column: 1 / -1;
+}
+
+// Inisialisasi
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('DOM Content Loaded - Bobot');
+    try {
+        window.bobotManager = new BobotManager();
+        console.log('BobotManager initialized successfully');
+    } catch (error) {
+        console.error('Error initializing BobotManager:', error);
+        // Tampilkan error ke user
+        const errorDiv = document.createElement('div');
+        errorDiv.style.cssText = `
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: #f44336;
+            color: white;
+            padding: 15px;
             text-align: center;
-            padding: 100px 20px;
-            background: white;
-            border-radius: 15px;
-            box-shadow: 0 6px 20px rgba(0,0,0,0.08);
-        }
-        .coming-soon h3 {
-            color: #333;
-            font-size: 24px;
-            margin-bottom: 15px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
-        }
-        .coming-soon p {
-            color: #666;
-            font-size: 16px;
-        }
-    `;
-    document.head.appendChild(style);
+            z-index: 9999;
+        `;
+        errorDiv.textContent = 'Terjadi kesalahan saat memuat halaman. Silakan refresh halaman.';
+        document.body.appendChild(errorDiv);
+        
+        setTimeout(() => {
+            errorDiv.remove();
+        }, 5000);
+    }
 });
