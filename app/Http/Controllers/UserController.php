@@ -16,28 +16,28 @@ class UserController extends Controller
      */
     public function login(Request $request)
     {
-    $user = User::where('email', $request->email)->first();
+        $request->validate([
+            'email' => 'required|email',
+            'password' => 'required',
+        ]);
 
-    if (!$user || !Hash::check($request->password, $user->password)) {
-        return response()->json(['message' => 'Login gagal'], 401);
-    }
+        $credentials = $request->only('email', 'password');
 
-    $token = $user->createToken('auth_token')->plainTextToken;
+        if (Auth::attempt($credentials)) {
+            $request->session()->regenerate(); // penting untuk keamanan
+            return redirect()->intended('/dashboard'); // redirect ke dashboard
+        }
 
-    return response()->json([
-        'token' => $token,
-        'user' => $user
-    ]);
-
+        return back()->with('error', 'Login gagal');
     }
 
     public function logout(Request $request)
     {
-        $request->user()->currentAccessToken()->delete();
+        Auth::logout();
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
 
-        return response()->json([
-            'message' => 'Logout berhasil'
-        ]);
+        return redirect('/');
     }
 
 

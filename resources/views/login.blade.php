@@ -17,12 +17,12 @@
     
     <style>
         :root {
-            --blue: #2a2185;
+            --blue: #3b6b0d;
             --white: #fff;
             --gray: #f5f5f5;
             --black1: #222;
             --black2: #999;
-            --light-blue: #3a31a5;
+            --light-blue: #3b6b0d;
         }
 
         * {
@@ -33,7 +33,7 @@
         }
 
         body {
-            background: linear-gradient(135deg, var(--blue) 0%, #4a41b5 100%);
+            background: linear-gradient(135deg, var(--blue) 0%, #3b6b0d 100%);
             min-height: 100vh;
             display: flex;
             justify-content: center;
@@ -207,13 +207,24 @@
             box-shadow: 0 5px 15px rgba(42, 33, 133, 0.3);
         }
 
+        .alert {
+            border-radius: 10px;
+            padding: 12px 15px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+        }
+
         .alert-danger {
             background: #fee;
             border: 1px solid #fcc;
             color: #c00;
-            border-radius: 10px;
-            padding: 12px 15px;
-            margin-bottom: 20px;
+        }
+
+        .alert-success {
+            background: #efe;
+            border: 1px solid #cfc;
+            color: #0c0;
         }
 
         .login-footer {
@@ -312,7 +323,7 @@
         <!-- Right Side - Login Form -->
         <div class="login-right">
             <div class="login-header">
-                <h2 class="login-title">Welcome Back</h2>
+                <h2 class="login-title">Welcome To M-Coffee</h2>
                 <p class="login-subtitle">Silakan masuk ke akun Anda</p>
             </div>
 
@@ -323,23 +334,38 @@
                 </div>
             @endif
 
-            <form action="/login" method="POST">
+            @if(session('success'))
+                <div class="alert alert-success">
+                    <ion-icon name="checkmark-circle-outline" style="vertical-align: middle; margin-right: 5px;"></ion-icon>
+                    {{ session('success') }}
+                </div>
+            @endif
+
+            <form method="POST" action="{{ route('login') }}">
                 @csrf
 
                 <div class="mb-4">
                     <label class="form-label">Email</label>
                     <div class="input-group">
-                        <input type="text" name="email" class="form-control" placeholder="Masukkan email Anda" required>
+                        <input type="email" name="email" class="form-control @error('email') is-invalid @enderror" 
+                               placeholder="Masukkan email Anda" required value="{{ old('email') }}">
                         <ion-icon name="mail-outline" class="input-icon"></ion-icon>
                     </div>
+                    @error('email')
+                        <div class="text-danger mt-1">{{ $message }}</div>
+                    @enderror
                 </div>
 
                 <div class="mb-4">
                     <label class="form-label">Password</label>
                     <div class="input-group">
-                        <input type="password" name="password" class="form-control" placeholder="Masukkan password" required>
+                        <input type="password" name="password" class="form-control @error('password') is-invalid @enderror" 
+                               placeholder="Masukkan password" required>
                         <ion-icon name="lock-closed-outline" class="input-icon"></ion-icon>
                     </div>
+                    @error('password')
+                        <div class="text-danger mt-1">{{ $message }}</div>
+                    @enderror
                 </div>
 
                 <button type="submit" class="btn-login mb-3">
@@ -355,23 +381,19 @@
     </div>
 
     <script>
-        // Add some interactivity
         document.addEventListener('DOMContentLoaded', function() {
             const inputs = document.querySelectorAll('.form-control');
             
             inputs.forEach(input => {
-                // Add focus effect
                 input.addEventListener('focus', function() {
                     this.parentElement.querySelector('.input-icon').style.color = 'var(--blue)';
                 });
                 
-                // Remove focus effect
                 input.addEventListener('blur', function() {
                     this.parentElement.querySelector('.input-icon').style.color = 'var(--black2)';
                 });
             });
             
-            // Form submission animation
             const form = document.querySelector('form');
             form.addEventListener('submit', function(e) {
                 const btn = this.querySelector('.btn-login');

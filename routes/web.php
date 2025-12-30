@@ -4,18 +4,24 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\KandidatController;
 use App\Http\Controllers\KriteriaController;
 use App\Http\Controllers\SubKriteriaController;
+use App\Http\Controllers\UserController;
 
-// Route::get('/', function () {
-//     return view('welcome');
-// });
+// Login Routes
+Route::get('/', function () {
+    return view('/login');
+})->middleware('guest');
 
+Route::post('/login', [UserController::class, 'login'])->name('login');
+
+// Logout Route
+Route::post('/logout', [UserController::class, 'logout'])->name('logout');
+
+
+Route::middleware('auth')->group(function () {
 Route::get('/kandidat/{id}/penilaian', function ($id) {
     return view('kandidat.penilaian', ['id' => $id]);
 })->name('penilaian.form');
 
-Route::get('/', function () {
-    return view('login');
-});
 
 // routes/web.php
 Route::resource('kandidat', KandidatController::class);
@@ -65,6 +71,8 @@ Route::get('/profile', function () {
     return view('dashboard.profile');
 })->name('profile');
 
-Route::get('/logout', function () {
-    return view('dashboard.logout');
-})->name('logout');
+// Route::get('/logout', function () {
+//     return view('dashboard.logout');
+// })->name('logout');
+
+});

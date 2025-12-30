@@ -3,7 +3,7 @@
         <li>
             <a href="/home">
                 <span class="icon">
-                    <ion-icon name="business-outline"></ion-icon>
+                    <ion-icon name="cafe-outline"></ion-icon>
                 </span>
                 <span class="title">M-Coffie</span>
             </a>
@@ -36,19 +36,19 @@
             </a>
         </li>
 
-         <li class="{{ Request::is('kriteria*') ? 'active-menu' : '' }}">
+        <li class="{{ Request::is('kriteria*') ? 'active-menu' : '' }}">
             <a href="/kriteria">
                 <span class="icon">
-                    <ion-icon name="scale-outline"></ion-icon>
+                    <ion-icon name="list-outline"></ion-icon>
                 </span>
                 <span class="title">Kriteria</span>
             </a>
         </li>
 
-          <li class="{{ Request::is('sub-kriteria*') ? 'active-menu' : '' }}">
+        <li class="{{ Request::is('sub-kriteria*') ? 'active-menu' : '' }}">
             <a href="/sub-kriteria">
                 <span class="icon">
-                    <ion-icon name="scale-outline"></ion-icon>
+                    <ion-icon name="layers-outline"></ion-icon>
                 </span>
                 <span class="title">Sub Kriteria</span>
             </a>
@@ -57,7 +57,7 @@
         <li class="{{ Request::is('penilaian*') ? 'active-menu' : '' }}">
             <a href="/penilaian">
                 <span class="icon">
-                    <ion-icon name="star-outline"></ion-icon>
+                    <ion-icon name="create-outline"></ion-icon>
                 </span>
                 <span class="title">Penilaian</span>
             </a>
@@ -72,13 +72,18 @@
             </a>
         </li>
 
-        <li>
-            <a href="#">
+       <li>
+            <a href="#" onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
                 <span class="icon">
                     <ion-icon name="log-out-outline"></ion-icon>
                 </span>
                 <span class="title">Keluar</span>
             </a>
+            
+            <form id="logout-form" action="{{ route('logout') }}" method="POST" style="display: none;">
+                @csrf
+            </form>
         </li>
+
     </ul>
 </div>
