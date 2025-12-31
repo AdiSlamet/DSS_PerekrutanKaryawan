@@ -28,7 +28,7 @@
 .header-icon {
     width: 70px;
     height: 70px;
-    background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+    background: linear-gradient(135deg, #2F4F2F 0%, #3E6B3E 100%);
     border-radius: 15px;
     display: flex;
     align-items: center;
@@ -82,7 +82,7 @@
 .stat-card:hover {
     transform: translateY(-5px);
     box-shadow: 0 8px 25px rgba(0,0,0,0.15);
-    border-color: #007bff;
+    border-color: #2F4F2F;
 }
 
 .stat-icon {
@@ -180,7 +180,7 @@
 }
 
 .periode-select:focus {
-    border-color: #007bff;
+    border-color: #2F4F2F;
     box-shadow: 0 0 0 3px rgba(0,123,255,0.1);
 }
 
@@ -196,7 +196,7 @@
 }
 
 .periode-info strong {
-    color: #007bff;
+    color: #2F4F2F;
 }
 
 .search-box {
@@ -211,7 +211,7 @@
 }
 
 .search-box:focus-within {
-    border-color: #007bff;
+    border-color: #2F4F2F;
     background: white;
     box-shadow: 0 0 0 3px rgba(0,123,255,0.1);
 }
@@ -251,7 +251,7 @@
 }
 
 .filter-select:focus {
-    border-color: #007bff;
+    border-color: #2F4F2F;
     box-shadow: 0 0 0 3px rgba(0,123,255,0.1);
 }
 
@@ -301,7 +301,7 @@
 }
 
 .candidates-table thead {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, #2F4F2F 0%, #3E6B3E 100%);
 }
 
 .candidates-table th {
@@ -404,7 +404,7 @@ td input[type="checkbox"] {
 
 .status-pending {
     background: #e7f1ff;
-    color: #007bff;
+    color: #2F4F2F;
     border: 1px solid #b3d7ff;
 }
 
@@ -431,7 +431,7 @@ td input[type="checkbox"] {
 
 .rating-fair {
     background: #e7f1ff;
-    color: #007bff;
+    color: #2F4F2F;
 }
 
 .rating-poor {
@@ -466,7 +466,7 @@ td input[type="checkbox"] {
 
 .action-btn.view {
     background: #e7f1ff;
-    color: #007bff;
+    color: #2F4F2F;
 }
 
 .action-btn.edit {
@@ -553,8 +553,8 @@ td input[type="checkbox"] {
 
 .pagination-btn:hover {
     background: #f8f9fa;
-    border-color: #007bff;
-    color: #007bff;
+    border-color: #2F4F2F;
+    color: #2F4F2F;
 }
 
 .pagination-btn:disabled {
@@ -584,13 +584,13 @@ td input[type="checkbox"] {
 
 .page-number:hover {
     background: #f8f9fa;
-    border-color: #007bff;
-    color: #007bff;
+    border-color: #2F4F2F;
+    color: #2F4F2F;
 }
 
 .page-number.active {
-    background: #007bff;
-    border-color: #007bff;
+    background: #2F4F2F;
+    border-color: #2F4F2F;
     color: white;
 }
 
@@ -629,7 +629,7 @@ td input[type="checkbox"] {
     box-shadow: 0 8px 30px rgba(0,0,0,0.15);
     z-index: 1000;
     min-width: 600px;
-    border: 2px solid #007bff;
+    border: 2px solid #2F4F2F;
 }
 
 .batch-info {
@@ -637,7 +637,7 @@ td input[type="checkbox"] {
     align-items: center;
     gap: 10px;
     font-weight: 600;
-    color: #007bff;
+    color: #2F4F2F;
 }
 
 .batch-info ion-icon {
@@ -680,7 +680,7 @@ td input[type="checkbox"] {
 
 .info-item ion-icon {
     font-size: 24px;
-    color: #007bff;
+    color: #2F4F2F;
 }
 
 .info-item div {
@@ -822,7 +822,7 @@ td input[type="checkbox"] {
     width: 40px;
     height: 40px;
     border: 4px solid #f3f3f3;
-    border-top: 4px solid #007bff;
+    border-top: 4px solid #2F4F2F;
     border-radius: 50%;
     animation: spin 1s linear infinite;
 }
@@ -830,4 +830,74 @@ td input[type="checkbox"] {
 @keyframes spin {
     0% { transform: rotate(0deg); }
     100% { transform: rotate(360deg); }
+}
+
+/* Toast Notification Styles */
+.toast {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: white;
+    padding: 15px 20px;
+    border-radius: 8px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+    z-index: 1100;
+    opacity: 0;
+    transform: translateY(-20px);
+    transition: all 0.3s ease;
+    border-left: 4px solid #2196F3;
+    max-width: 400px;
+}
+
+.toast.show {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.toast.success {
+    border-left-color: #4CAF50;
+}
+
+.toast.error {
+    border-left-color: #f44336;
+}
+
+.toast.info {
+    border-left-color: #2196F3;
+}
+
+.toast.warning {
+    border-left-color: #FF9800;
+}
+
+.toast-content {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.toast-icon {
+    font-size: 20px;
+}
+
+.toast.success .toast-icon {
+    color: #4CAF50;
+}
+
+.toast.error .toast-icon {
+    color: #f44336;
+}
+
+.toast.info .toast-icon {
+    color: #2196F3;
+}
+
+.toast.warning .toast-icon {
+    color: #FF9800;
+}
+
+.toast-message {
+    font-size: 14px;
+    color: #374151;
+    flex: 1;
 }

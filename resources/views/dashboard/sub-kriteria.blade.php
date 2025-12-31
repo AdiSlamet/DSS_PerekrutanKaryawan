@@ -18,7 +18,7 @@
             </div>
         </div>
         <div class="header-actions">
-            <button class="btn btn-primary" id="btnRefreshAll">
+            <button class="btn btn-green" id="btnRefreshAll">
                 <svg class="icon" viewBox="0 0 24 24">
                     <path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/>
                 </svg>
@@ -165,9 +165,13 @@
         });
     }
 
-    async loadData() {
+   async loadData() {
         try {
             this.showLoading();
+            
+            // Reset data sebelum load baru
+            this.kriteriaData = [];
+            this.subKriteriaData = [];
             
             // Load kriteria data
             const kriteriaResponse = await fetch(this.API_CONFIG.kriteria);
@@ -176,18 +180,27 @@
             this.kriteriaData = kriteriaResult.data || kriteriaResult;
             
             // Load subkriteria untuk setiap kriteria
-            this.subKriteriaData = [];
             for (const kriteria of this.kriteriaData) {
                 try {
                     const subResponse = await fetch(this.API_CONFIG.subKriteriaByKriteria(kriteria.id));
                     if (subResponse.ok) {
                         const subResult = await subResponse.json();
-                        if (subResult.data) {
-                            this.subKriteriaData = [...this.subKriteriaData, ...subResult.data.map(item => ({
-                                ...item,
-                                kriteria_id: kriteria.id,
-                                kriteria_nama: kriteria.nama
-                            }))];
+                        if (subResult.data && Array.isArray(subResult.data)) {
+                            // Tambahkan data dengan memastikan tidak ada duplikat
+                            subResult.data.forEach(item => {
+                                // Cek apakah data sudah ada
+                                const isDuplicate = this.subKriteriaData.some(existing => 
+                                    String(existing.id) === String(item.id)
+                                );
+                                
+                                if (!isDuplicate) {
+                                    this.subKriteriaData.push({
+                                        ...item,
+                                        kriteria_id: kriteria.id,
+                                        kriteria_nama: kriteria.nama
+                                    });
+                                }
+                            });
                         }
                     }
                 } catch (error) {
@@ -315,6 +328,9 @@
     }
 
     attachCardEvents() {
+        // Hapus event listener sebelumnya untuk menghindari duplikasi
+        this.removeCardEvents();
+        
         // Add button
         document.querySelectorAll('.add-sub-btn').forEach(btn => {
             btn.addEventListener('click', (e) => {
@@ -349,6 +365,15 @@
                 const nama = e.currentTarget.dataset.nama;
                 this.openHapusModal(id, nama);
             });
+        });
+    }
+
+    // Fungsi baru untuk menghapus event listeners
+    removeCardEvents() {
+        // Hapus semua event listener dengan cara mengkloning dan mengganti elemen
+        document.querySelectorAll('.add-sub-btn, .refresh-kriteria, .btn-edit-sub, .btn-delete-sub').forEach(btn => {
+            const newBtn = btn.cloneNode(true);
+            btn.parentNode.replaceChild(newBtn, btn);
         });
     }
 
@@ -455,7 +480,9 @@
             if (response.ok) {
                 this.showMessage('Sub Kriteria berhasil ditambahkan', 'success');
                 this.closeTambahModal();
-                await this.refreshKriteriaData(formData.kriteria_id);
+                
+                // PERBAIKAN: Load ulang semua data, bukan hanya kriteria tertentu
+                await this.loadData();
             } else {
                 throw new Error(data.message || 'Gagal menambahkan data');
             }
@@ -466,36 +493,43 @@
     }
 
     async updateSubKriteria(e) {
-        e.preventDefault();
+    e.preventDefault();
+    
+    const formData = {
+        id: document.getElementById('editSubId').value,
+        nama: document.getElementById('editSubNama').value.trim(),
+        nilai: parseFloat(document.getElementById('editSubNilai').value)
+    };
+    
+    try {
+        const response = await fetch(`${this.API_CONFIG.subKriteria}/${formData.id}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+            },
+            body: JSON.stringify({
+                nama: formData.nama,
+                nilai: formData.nilai
+            })
+        });
         
-        const formData = {
-            id: document.getElementById('editSubId').value,
-            nama: document.getElementById('editSubNama').value.trim(),
-            nilai: parseFloat(document.getElementById('editSubNilai').value)
-        };
+        const data = await response.json();
         
-        try {
-            const response = await fetch(`${this.API_CONFIG.subKriteria}/${formData.id}`, {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json',
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
-                },
-                body: JSON.stringify({
-                    nama: formData.nama,
-                    nilai: formData.nilai
-                })
-            });
+        if (response.ok) {
+            this.showMessage('Sub Kriteria berhasil diperbarui', 'success');
+            this.closeEditModal();
             
-            const data = await response.json();
-            
-            if (response.ok) {
-                this.showMessage('Sub Kriteria berhasil diperbarui', 'success');
-                this.closeEditModal();
-                await this.loadData();
+            // PERBAIKAN: Cari kriteria_id dari data yang diupdate
+            const updatedItem = this.subKriteriaData.find(item => String(item.id) === String(formData.id));
+            if (updatedItem) {
+                await this.refreshKriteriaData(updatedItem.kriteria_id);
             } else {
-                throw new Error(data.message || 'Gagal mengupdate data');
+                await this.loadData();
+            }
+        } else {
+            throw new Error(data.message || 'Gagal mengupdate data');
             }
         } catch (error) {
             console.error('Error updating sub kriteria:', error);
@@ -503,24 +537,37 @@
         }
     }
 
+
     async confirmDelete() {
-        if (!this.kriteriaToDelete) return;
+    if (!this.kriteriaToDelete) return;
+    
+    try {
+        // Cari kriteria_id dari data yang akan dihapus
+        const itemToDelete = this.subKriteriaData.find(item => 
+            String(item.id) === String(this.kriteriaToDelete.id)
+        );
+        const kriteriaId = itemToDelete?.kriteria_id;
         
-        try {
-            const response = await fetch(`${this.API_CONFIG.subKriteria}/${this.kriteriaToDelete.id}`, {
-                method: 'DELETE',
-                headers: {
-                    'Accept': 'application/json',
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+        const response = await fetch(`${this.API_CONFIG.subKriteria}/${this.kriteriaToDelete.id}`, {
+            method: 'DELETE',
+            headers: {
+                'Accept': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+            }
+        });
+        
+        const data = await response.json();
+        
+        if (response.ok) {
+            this.showMessage('Sub Kriteria berhasil dihapus', 'success');
+            this.closeHapusModal();
+            
+            // Refresh data kriteria tertentu jika ditemukan
+            if (kriteriaId) {
+                await this.refreshKriteriaData(kriteriaId);
+                } else {
+                    await this.loadData();
                 }
-            });
-            
-            const data = await response.json();
-            
-            if (response.ok) {
-                this.showMessage('Sub Kriteria berhasil dihapus', 'success');
-                this.closeHapusModal();
-                await this.loadData();
             } else {
                 throw new Error(data.message || 'Gagal menghapus data');
             }
@@ -531,33 +578,36 @@
     }
 
     async refreshKriteriaData(kriteriaId) {
-        try {
-            const response = await fetch(this.API_CONFIG.subKriteriaByKriteria(kriteriaId));
-            if (!response.ok) throw new Error('Gagal refresh data');
-            
-            const result = await response.json();
-            
-            // Update data lokal
-            this.subKriteriaData = this.subKriteriaData.filter(item => item.kriteria_id != kriteriaId);
-            
-            if (result.data) {
-                const kriteria = this.kriteriaData.find(k => k.id == kriteriaId);
-                result.data.forEach(item => {
-                    this.subKriteriaData.push({
-                        ...item,
-                        kriteria_id: kriteriaId,
-                        kriteria_nama: kriteria.nama
-                    });
+    try {
+        const response = await fetch(this.API_CONFIG.subKriteriaByKriteria(kriteriaId));
+        if (!response.ok) throw new Error('Gagal refresh data');
+        
+        const result = await response.json();
+        
+        // PERBAIKAN: Hapus semua data sub kriteria untuk kriteria ini dengan benar
+        this.subKriteriaData = this.subKriteriaData.filter(item => 
+            String(item.kriteria_id) !== String(kriteriaId)
+        );
+        
+        if (result.data) {
+            const kriteria = this.kriteriaData.find(k => String(k.id) === String(kriteriaId));
+            // Tambahkan data baru
+            result.data.forEach(item => {
+                this.subKriteriaData.push({
+                    ...item,
+                    kriteria_id: kriteriaId,
+                    kriteria_nama: kriteria?.nama || 'Unknown'
                 });
-            }
-            
-            this.renderKriteriaCards();
-            this.updateStats();
-            this.showMessage('Data berhasil diperbarui', 'success');
-            
-        } catch (error) {
-            console.error('Error refreshing data:', error);
-            this.showMessage('Gagal memperbarui data', 'error');
+            });
+        }
+        
+        this.renderKriteriaCards();
+        this.updateStats();
+        this.showMessage('Data berhasil diperbarui', 'success');
+        
+    } catch (error) {
+        console.error('Error refreshing data:', error);
+        this.showMessage('Gagal memperbarui data', 'error');
         }
     }
 

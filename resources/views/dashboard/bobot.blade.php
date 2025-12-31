@@ -13,11 +13,11 @@
             </div>
             <div>
                 <h1>Manajemen Bobot Kriteria</h1>
-                <p class="page-subtitle">Kelola bobot untuk setiap kriteria penilaian</p>
+                <p class="page-subtitle">Kelola bobot untuk setiap kriteria penilaian bobot harus 100%</p>
             </div>
         </div>
         <div class="header-actions">
-            <button class="btn btn-primary" id="btnTambahBobot">
+            <button class="btn btn-greens" id="btnTambahBobot">
                 <ion-icon name="add-outline"></ion-icon> Tambah Bobot
             </button>
         </div>

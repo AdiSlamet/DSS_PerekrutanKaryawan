@@ -11,51 +11,16 @@
                 <ion-icon name="clipboard-outline"></ion-icon>
             </div>
             <div>
-                <h1>Manajemen Penilaian Kandidat</h1>
+                <h1>Penilaian Kandidat</h1>
                 <p class="page-subtitle">Kelola penilaian kandidat berdasarkan kriteria yang ditentukan</p>
             </div>
         </div>
         <div class="header-actions">
-            <button class="btn btn-primary" onclick="openModal()">
+            <button class="btn btn-green" onclick="openModal()">
                 <ion-icon name="add-outline"></ion-icon> Tambah Penilaian
             </button>
         </div>
     </div>
-
-    <!-- Statistik Cards -->
-    {{-- <div class="stats-section">
-        <div class="stats-grid">
-            <div class="stat-card">
-                <div class="stat-icon" style="background: linear-gradient(135deg, #4361ee 0%, #3a0ca3 100%);">
-                    <ion-icon name="people-outline"></ion-icon>
-                </div>
-                <div class="stat-content">
-                    <h3 id="totalPenilaian">0</h3>
-                    <p>Total Penilaian</p>
-                </div>
-            </div>
-            
-            <div class="stat-card">
-                <div class="stat-icon" style="background: linear-gradient(135deg, #4CAF50 0%, #2E7D32 100%);">
-                    <ion-icon name="calendar-outline"></ion-icon>
-                </div>
-                <div class="stat-content">
-                    <h3 id="periodeAktif">0</h3>
-                    <p>Periode Aktif</p>
-                </div>
-            </div>
-            
-            <div class="stat-card">
-                <div class="stat-icon" style="background: linear-gradient(135deg, #FF9800 0%, #F57C00 100%);">
-                    <ion-icon name="star-outline"></ion-icon>
-                </div>
-                <div class="stat-content">
-                    <h3 id="rerataSkor">0</h3>
-                    <p>Rata-rata Skor</p>
-                </div>
-            </div>
-        </div>
-    </div> --}}
 
     <!-- Filter Section -->
     <div class="data-section">
@@ -118,9 +83,6 @@
             </div>
             <h3>Belum Ada Data Penilaian</h3>
             <p>Tambahkan penilaian baru untuk memulai evaluasi kandidat</p>
-            <button class="btn btn-primary" onclick="openModal()">
-                <ion-icon name="add-outline"></ion-icon> Tambah Penilaian Pertama
-            </button>
         </div>
     </div>
 </div>
@@ -485,7 +447,7 @@
     .header-icon {
         width: 60px;
         height: 60px;
-        background: linear-gradient(135deg, #4361ee 0%, #3a0ca3 100%);
+        background: linear-gradient(135deg, #2F4F2F 0%, #3E6B3E 100%);
         border-radius: 12px;
         display: flex;
         align-items: center;
@@ -598,14 +560,14 @@
     }
     
     .candidates-table thead {
-        background: #f9fafb;
+        background: #2F4F2F;
     }
     
     .candidates-table th {
         padding: 16px 20px;
         text-align: left;
         font-weight: 600;
-        color: #374151;
+        color: #f9fafb;
         font-size: 14px;
         text-transform: uppercase;
         letter-spacing: 0.5px;

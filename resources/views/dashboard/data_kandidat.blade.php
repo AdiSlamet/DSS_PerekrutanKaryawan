@@ -17,20 +17,20 @@
             </div>
         </div>
         <div class="header-actions">
-            <button class="btn btn-outline-primary" id="btnImport">
+            {{-- <button class="btn btn-outline-primary" id="btnImport">
                 <ion-icon name="cloud-upload-outline"></ion-icon> Import
-            </button>
-            <button class="btn btn-primary" id="btnTambahBaru" >
+            </button> --}}
+            <button class="btn btn-green" id="btnTambahBaru" >
                 <ion-icon name="add-outline"></ion-icon> Tambah Kandidat
             </button>
         </div>
     </div>
 
     <!-- Statistik Cards -->
-    <div class="stats-section">
+     <div class="stats-section">
         <div class="stats-grid">
             <div class="stat-card">
-                <div class="stat-icon" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                <div class="stat-icon" style="background: linear-gradient(135deg, #2F4F2F 0%, #3E6B3E 100%);">
                     <ion-icon name="people-outline"></ion-icon>
                 </div>
                 <div class="stat-content">
@@ -39,38 +39,41 @@
                 </div>
                 <div class="stat-trend">
                     <ion-icon name="trending-up-outline"></ion-icon>
-                    <span>+2 hari ini</span>
+                    <span>Semua periode</span>
                 </div>
             </div>
             
+            <!-- Card Sudah Dinilai -->
             <div class="stat-card">
                 <div class="stat-icon" style="background: linear-gradient(135deg, #4CAF50 0%, #2E7D32 100%);">
-                    <ion-icon name="star-outline"></ion-icon>
+                    <ion-icon name="checkmark-done-outline"></ion-icon> <!-- Icon diubah -->
                 </div>
                 <div class="stat-content">
-                    <h3 id="topRated">0</h3>
-                    <p>Top Rated</p>
+                    <h3 id="sudahDinilai">0</h3>
+                    <p>Sudah Dinilai</p>
                 </div>
                 <div class="stat-trend">
-                    <ion-icon name="trophy-outline"></ion-icon>
-                    <span>Skor ≥ 4.5</span>
+                    <ion-icon name="checkmark-circle-outline"></ion-icon> <!-- Icon diubah -->
+                    <span id="trendSudahDinilai">0% dari total</span> <!-- Text diubah -->
                 </div>
             </div>
             
+            <!-- Card Belum Dinilai -->
             <div class="stat-card">
                 <div class="stat-icon" style="background: linear-gradient(135deg, #FF9800 0%, #F57C00 100%);">
-                    <ion-icon name="time-outline"></ion-icon>
+                    <ion-icon name="time-outline"></ion-icon> <!-- Icon tetap -->
                 </div>
                 <div class="stat-content">
-                    <h3 id="pendingReview">0</h3>
-                    <p>Perlu Review</p>
+                    <h3 id="belumDinilai">0</h3>
+                    <p>Belum Dinilai</p> <!-- Text diubah -->
                 </div>
                 <div class="stat-trend">
-                    <ion-icon name="alert-circle-outline"></ion-icon>
-                    <span>Skor ≤ 3.0</span>
+                    <ion-icon name="alert-circle-outline"></ion-icon> <!-- Icon diubah -->
+                    <span id="trendBelumDinilai">0% dari total</span> <!-- Text diubah -->
                 </div>
             </div>
             
+            <!-- Card Periode Aktif tetap -->
             <div class="stat-card">
                 <div class="stat-icon" style="background: linear-gradient(135deg, #2196F3 0%, #0D47A1 100%);">
                     <ion-icon name="calendar-outline"></ion-icon>
@@ -81,7 +84,7 @@
                 </div>
                 <div class="stat-trend">
                     <ion-icon name="checkmark-circle-outline"></ion-icon>
-                    <span>Aktif</span>
+                    <span id="periodeStatus">Aktif</span>
                 </div>
             </div>
         </div>

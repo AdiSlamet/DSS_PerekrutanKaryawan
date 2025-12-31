@@ -455,9 +455,6 @@ async debugCheckData(id) {
                         </span>
                     </td>
                     <td>
-                        <span class="subkriteria-count">${jumlahSubkriteria}</span> subkriteria
-                    </td>
-                    <td>
                         <div class="action-buttons">
                             <button class="btn-action btn-edit" data-id="${kriteria.id}" title="Edit">
                                 <ion-icon name="create-outline"></ion-icon>

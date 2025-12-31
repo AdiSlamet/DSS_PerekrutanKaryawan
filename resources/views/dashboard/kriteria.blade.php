@@ -16,7 +16,7 @@
             </div>
         </div>
         <div class="header-actions">
-            <button class="btn btn-primary" id="btnTambahKriteria">
+            <button class="btn btn-green" id="btnTambahKriteria">
                 <ion-icon name="add-outline"></ion-icon> Tambah Kriteria
             </button>
         </div>
@@ -75,7 +75,7 @@
                         <th style="width: 80px;">No</th>
                         <th>Nama Kriteria</th>
                         <th style="width: 120px;">Jenis</th>
-                        <th style="width: 120px;">Jumlah Subkriteria</th>
+                        {{-- <th style="width: 120px;">Jumlah Subkriteria</th> --}}
                         <th style="width: 150px;">Aksi</th>
                     </tr>
                 </thead>

@@ -92,11 +92,11 @@
 
 .nav-tab:hover {
     background: rgba(0,123,255,0.1);
-    color: #007bff;
+    color: #2F4F2F;
 }
 
 .nav-tab.active {
-    background: #007bff;
+    background: #2F4F2F;
     color: white;
     box-shadow: 0 4px 8px rgba(0,123,255,0.2);
 }
@@ -147,7 +147,7 @@
 
 .dropdown-item:hover {
     background: #f8f9fa;
-    color: #007bff;
+    color: #2F4F2F;
 }
 
 /* Konten Utama */
@@ -206,7 +206,7 @@
 .stat-card:hover {
     transform: translateY(-5px);
     box-shadow: 0 8px 25px rgba(0,0,0,0.15);
-    border-color: #007bff;
+    border-color: #2F4F2F;
 }
 
 .stat-icon {
@@ -283,7 +283,7 @@
 }
 
 .weight-item:hover {
-    border-color: #007bff;
+    border-color: #3E6B3E;
     background: white;
 }
 
@@ -322,7 +322,7 @@
     font-size: 36px;
     font-weight: bold;
     text-align: center;
-    color: #007bff;
+    color: #2F4F2F;
     margin: 15px 0;
 }
 
@@ -340,7 +340,7 @@
 
 .range-fill {
     height: 100%;
-    background: linear-gradient(90deg, #007bff, #0056b3);
+    background: linear-gradient(90deg, #2F4F2F, #3E6B3E);
     border-radius: 4px;
 }
 

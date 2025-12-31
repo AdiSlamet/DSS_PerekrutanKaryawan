@@ -1,5 +1,6 @@
 // Configuration
 const API_BASE_URL = '/api/kandidat';
+const API_DASHBOARD_URL = '/api/dashboard';
 let currentPage = 1;
 let itemsPerPage = 10;
 let totalItems = 0;
@@ -7,36 +8,126 @@ let allKandidatData = [];
 let selectedKandidatIds = [];
 let currentPeriode = '';
 let availablePeriodes = [];
+let statsData = {};
 
 // Initialize on page load
 document.addEventListener('DOMContentLoaded', function() {
     initializeEventListeners();
+    loadDashboardStats();
     loadKandidatData();
 });
 
+// Tambahkan fungsi loading overlay di bagian atas file
+function showLoading() {
+    // Create loading overlay if it doesn't exist
+    let loadingOverlay = document.getElementById('loadingOverlay');
+    if (!loadingOverlay) {
+        loadingOverlay = document.createElement('div');
+        loadingOverlay.id = 'loadingOverlay';
+        loadingOverlay.className = 'custom-modal';
+        loadingOverlay.innerHTML = `
+            <div class="modal-overlay"></div>
+            <div class="modal-dialog">
+                <div class="modal-content" style="text-align: center; padding: 40px;">
+                    <div class="spinner"></div>
+                    <p style="margin-top: 15px;">Memuat data...</p>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(loadingOverlay);
+    }
+    loadingOverlay.style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+}
+
+function hideLoading() {
+    const loadingOverlay = document.getElementById('loadingOverlay');
+    if (loadingOverlay) {
+        loadingOverlay.style.display = 'none';
+        document.body.style.overflow = '';
+    }
+}
 // Event Listeners
 function initializeEventListeners() {
     // Periode selector
-    document.getElementById('periodeSelect').addEventListener('change', handlePeriodeChange);
-    
+    const periodeSelect = document.getElementById('periodeSelect');
+    if (periodeSelect) {
+        periodeSelect.addEventListener('change', handlePeriodeChange);
+    }
+
     // Search input
-    document.getElementById('searchInput').addEventListener('input', handleSearch);
-    
+    const searchInput = document.getElementById('searchInput');
+    if (searchInput) {
+        searchInput.addEventListener('input', handleSearch);
+    }
+
     // Buttons
-    document.getElementById('btnTambahBaru').addEventListener('click', openTambahModal);
-    document.getElementById('btnImport').addEventListener('click', handleImport);
-    
+    const btnTambahBaru = document.getElementById('btnTambahBaru');
+    if (btnTambahBaru) {
+        btnTambahBaru.addEventListener('click', openTambahModal);
+    }
+
+    const btnImport = document.getElementById('btnImport');
+    if (btnImport) {
+        btnImport.addEventListener('click', handleImport);
+    }
+
     // Pagination
-    document.getElementById('itemsPerPage').addEventListener('change', handleItemsPerPageChange);
-    document.getElementById('btnPrev').addEventListener('click', () => changePage(currentPage - 1));
-    document.getElementById('btnNext').addEventListener('click', () => changePage(currentPage + 1));
-    
-    
+    const itemsPerPageSelect = document.getElementById('itemsPerPage');
+    if (itemsPerPageSelect) {
+        itemsPerPageSelect.addEventListener('change', handleItemsPerPageChange);
+    }
+
+    const btnPrev = document.getElementById('btnPrev');
+    if (btnPrev) {
+        btnPrev.addEventListener('click', () => changePage(currentPage - 1));
+    }
+
+    const btnNext = document.getElementById('btnNext');
+    if (btnNext) {
+        btnNext.addEventListener('click', () => changePage(currentPage + 1));
+    }
+
     // Batch actions
-    document.getElementById('btnBatchDelete').addEventListener('click', handleBatchDelete);
-    document.getElementById('btnBatchExport').addEventListener('click', handleBatchExport);
-    document.getElementById('btnBatchReview').addEventListener('click', handleBatchReview);
+    const btnBatchDelete = document.getElementById('btnBatchDelete');
+    if (btnBatchDelete) {
+        btnBatchDelete.addEventListener('click', handleBatchDelete);
+    }
+
+    const btnBatchExport = document.getElementById('btnBatchExport');
+    if (btnBatchExport) {
+        btnBatchExport.addEventListener('click', handleBatchExport);
+    }
+
+    const btnBatchReview = document.getElementById('btnBatchReview');
+    if (btnBatchReview) {
+        btnBatchReview.addEventListener('click', handleBatchReview);
+    }
 }
+
+async function loadDashboardStats(periode = null) {
+    try {
+        const url = periode 
+            ? `${API_DASHBOARD_URL}?periode=${periode}` 
+            : API_DASHBOARD_URL;
+        
+        const response = await fetch(url);
+        
+        if (!response.ok) {
+            throw new Error('Gagal memuat statistik');
+        }
+        
+        const result = await response.json();
+        statsData = result.data || {};
+        
+        updateStatistics();
+    } catch (error) {
+        console.error('Error loading stats:', error);
+        showNotification('Gagal memuat statistik', 'error');
+    }
+}
+
+
 
 // Load Data from API
 async function loadKandidatData(periode = null) {
@@ -56,7 +147,12 @@ async function loadKandidatData(periode = null) {
         // Extract dan populate periode dari data
         extractAndPopulatePeriodes();
         
-        updateStatistics();
+        // Load stats untuk periode yang sama
+        await loadDashboardStats(periode);
+        
+        // Update total items untuk pagination
+        totalItems = allKandidatData.length;
+        
         renderTable();
         updateLastUpdate();
         
@@ -121,9 +217,9 @@ function extractAndPopulatePeriodes() {
 
 // Update Periode Display
 function updatePeriodeDisplay(periodeValue) {
-    if (!periodeValue || periodeValue === 'Belum Ada Data') {
-        document.getElementById('currentPeriode').textContent = 'Belum Ada Data';
-        document.getElementById('activePeriod').textContent = '-';
+    if (!periodeValue) {
+        document.getElementById('currentPeriode').textContent = 'Semua Periode';
+        document.getElementById('activePeriod').textContent = 'Semua';
         return;
     }
     
@@ -141,15 +237,37 @@ function updatePeriodeDisplay(periodeValue) {
 
 // Update Statistics
 function updateStatistics() {
-    const total = allKandidatData.length;
-    const topRated = allKandidatData.filter(k => k.status === 'Lolos').length;
-    const needReview = allKandidatData.filter(k => k.status === 'Pending' || !k.status).length;
+    const total = statsData.total_kandidat || 0;
+    const sudah = statsData.sudah_dinilai || 0;
+    const belum = statsData.belum_dinilai || 0;
+    const rataSkor = statsData.rata_skor || 0;
     
+    // Update card values
     document.getElementById('totalKandidat').textContent = total;
-    document.getElementById('topRated').textContent = topRated;
-    document.getElementById('pendingReview').textContent = needReview;
+    document.getElementById('sudahDinilai').textContent = sudah;
+    document.getElementById('belumDinilai').textContent = belum;
     
-    totalItems = total;
+    // Update trend text
+    const persenSudah = total > 0 ? Math.round((sudah / total) * 100) : 0;
+    const persenBelum = total > 0 ? Math.round((belum / total) * 100) : 0;
+    
+    document.getElementById('trendSudahDinilai').textContent = `${persenSudah}% dari total`;
+    document.getElementById('trendBelumDinilai').textContent = `${persenBelum}% dari total`;
+    
+    // Update periode status
+    if (currentPeriode && statsData.periode) {
+        const [year, month] = statsData.periode.split('-');
+        const monthNames = [
+            'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
+            'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
+        ];
+        const monthName = monthNames[parseInt(month) - 1] || 'Unknown';
+        document.getElementById('periodeStatus').textContent = `${monthName} ${year}`;
+    } else if (statsData.total_kandidat > 0) {
+        document.getElementById('periodeStatus').textContent = 'Semua Periode';
+    } else {
+        document.getElementById('periodeStatus').textContent = 'Tidak Aktif';
+    }
 }
 
 // Render Table
@@ -273,6 +391,7 @@ function handlePeriodeChange(e) {
         document.getElementById('activePeriod').textContent = 'Semua';
     }
     
+    // Load data dan stats untuk periode yang dipilih
     loadKandidatData(currentPeriode);
 }
 
@@ -310,6 +429,8 @@ function openTambahModal() {
 // Tambah Kandidat
 async function tambahKandidat(formData) {
     try {
+        showNotification('Menyimpan data kandidat...', 'info');
+        
         const response = await fetch(API_BASE_URL, {
             method: 'POST',
             headers: {
@@ -320,11 +441,12 @@ async function tambahKandidat(formData) {
         });
         
         if (!response.ok) {
-            throw new Error('Gagal menambah kandidat');
+            const errorData = await response.json();
+            throw new Error(errorData.message || 'Gagal menambah kandidat');
         }
         
         const result = await response.json();
-        showNotification(result.massage || 'Kandidat berhasil ditambahkan', 'success');
+        showNotification(result.message || 'Kandidat berhasil ditambahkan', 'success');
         closeModal('modalTambahKandidat');
         
         // Reload data tanpa filter periode untuk mendapatkan semua data terbaru
@@ -346,7 +468,7 @@ async function tambahKandidat(formData) {
         }
     } catch (error) {
         console.error('Error:', error);
-        showNotification('Gagal menambah kandidat', 'error');
+        showNotification(error.message || 'Gagal menambah kandidat', 'error');
     }
 }
 
@@ -409,6 +531,8 @@ async function editKandidat(id) {
 // Update Kandidat
 async function updateKandidat(id, formData) {
     try {
+        showNotification('Memperbarui data kandidat...', 'info');
+        
         const response = await fetch(`${API_BASE_URL}/${id}`, {
             method: 'PUT',
             headers: {
@@ -419,16 +543,17 @@ async function updateKandidat(id, formData) {
         });
         
         if (!response.ok) {
-            throw new Error('Gagal memperbarui kandidat');
+            const errorData = await response.json();
+            throw new Error(errorData.message || 'Gagal memperbarui kandidat');
         }
         
         const result = await response.json();
         showNotification(result.message || 'Kandidat berhasil diperbarui', 'success');
         closeModal('modalEditKandidat');
-        loadKandidatData(currentPeriode);
+        await loadKandidatData(currentPeriode);
     } catch (error) {
         console.error('Error:', error);
-        showNotification('Gagal memperbarui kandidat', 'error');
+        showNotification(error.message || 'Gagal memperbarui kandidat', 'error');
     }
 }
 
@@ -450,6 +575,8 @@ async function confirmDelete() {
     const id = document.getElementById('deleteKandidatId').value;
     
     try {
+        showNotification('Menghapus kandidat...', 'info');
+        
         const response = await fetch(`${API_BASE_URL}/${id}`, {
             method: 'DELETE',
             headers: {
@@ -458,7 +585,8 @@ async function confirmDelete() {
         });
         
         if (!response.ok) {
-            throw new Error('Gagal menghapus kandidat');
+            const errorData = await response.json();
+            throw new Error(errorData.message || 'Gagal menghapus kandidat');
         }
         
         const result = await response.json();
@@ -469,7 +597,7 @@ async function confirmDelete() {
         await loadKandidatData();
     } catch (error) {
         console.error('Error:', error);
-        showNotification('Gagal menghapus kandidat', 'error');
+        showNotification(error.message || 'Gagal menghapus kandidat', 'error');
     }
 }
 
@@ -576,24 +704,31 @@ function hideLoading() {
     document.body.style.cursor = 'default';
 }
 
+// GANTI fungsi showNotification yang lama dengan ini:
 function showNotification(message, type = 'success') {
     // Create notification element
-    const notification = document.createElement('div');
-    notification.className = `notification notification-${type}`;
-    notification.innerHTML = `
-        <ion-icon name="${type === 'success' ? 'checkmark-circle' : type === 'error' ? 'close-circle' : 'information-circle'}-outline"></ion-icon>
-        <span>${message}</span>
+    const toast = document.createElement('div');
+    toast.className = `toast ${type}`;
+    toast.innerHTML = `
+        <div class="toast-content">
+            <ion-icon name="${type === 'success' ? 'checkmark-circle' : type === 'error' ? 'alert-circle' : 'information-circle'}-outline" 
+                     class="toast-icon"></ion-icon>
+            <span class="toast-message">${message}</span>
+        </div>
     `;
     
-    document.body.appendChild(notification);
+    document.body.appendChild(toast);
     
-    setTimeout(() => {
-        notification.classList.add('show');
-    }, 10);
+    // Trigger reflow
+    toast.offsetHeight;
     
+    // Add show class
+    toast.classList.add('show');
+    
+    // Remove after 3 seconds
     setTimeout(() => {
-        notification.classList.remove('show');
-        setTimeout(() => notification.remove(), 300);
+        toast.classList.remove('show');
+        setTimeout(() => toast.remove(), 300);
     }, 3000);
 }
 

@@ -17,12 +17,12 @@
     
     <style>
         :root {
-            --blue: #3b6b0d;
+            --blue: #233d0b;
             --white: #fff;
             --gray: #f5f5f5;
             --black1: #222;
             --black2: #999;
-            --light-blue: #3b6b0d;
+            --light-blue: #447913;
         }
 
         * {
@@ -96,6 +96,8 @@
         .brand-icon {
             font-size: 4rem;
             margin-bottom: 20px;
+            width: 200px;
+            height: 100px;
             color: var(--white);
         }
 
@@ -295,8 +297,9 @@
         <!-- Left Side - Brand & Info -->
         <div class="login-left">
             <div class="brand-section">
-                <ion-icon name="business-outline" class="brand-icon"></ion-icon>
-                <h1 class="brand-title">M-Coffee</h1>
+                <img src="img/m-coffe.png" alt="" class="brand-icon">
+                {{-- <ion-icon name="business-outline" class="brand-icon"></ion-icon> --}}
+                {{-- <h1 class="brand-title">M-Coffee</h1> --}}
                 <p class="brand-subtitle">Sistem Seleksi Karyawan</p>
             </div>
             

@@ -2,10 +2,7 @@
     <ul>
         <li>
             <a href="/home">
-                <span class="icon">
-                    <ion-icon name="cafe-outline"></ion-icon>
-                </span>
-                <span class="title">M-Coffie</span>
+                <span class="title"><img src="img/m-coffe.png" alt=""></span>
             </a>
         </li>
 
@@ -87,3 +84,13 @@
 
     </ul>
 </div>
+<style>
+.title-sidebar img,
+.title img {
+    width: 200px;
+    height: auto;
+    position: absolute;
+    top: 10px;
+    left: 40px;
+}
+</style>
